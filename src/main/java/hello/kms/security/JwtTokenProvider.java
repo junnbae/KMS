@@ -1,5 +1,6 @@
 package hello.kms.security;
 
+import hello.kms.exception.TokenNotFoundException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -55,10 +56,12 @@ public class JwtTokenProvider {
 
     public String resolveToken(HttpServletRequest request){
 //        return request.getHeader("X-AUTH-TOKEN");
-        Cookie[] cookies = request.getCookies();
-        for(Cookie cookie : cookies){
-            if("X-AUTH-TOKEN".equals(cookie.getName()))
-                return cookie.getValue();
+        if(request.getCookies() != null) {
+            Cookie[] cookies = request.getCookies();
+            for (Cookie cookie : cookies) {
+                if ("X-AUTH-TOKEN".equals(cookie.getName()))
+                    return cookie.getValue();
+            }
         }
         return null;
     }

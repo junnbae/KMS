@@ -52,12 +52,17 @@ public class UserService {
         if(findUser.isPresent()){
             User user = findUser.get();
             if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
-                String token = jwtTokenProvider.createToken(user.getUserId(), user.getRoles());
+                String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
+                String refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getRoles());
+
                 try {
-                    response.setHeader("X-AUTH-TOKEN", token);
-                    Cookie cookie = new Cookie("X-AUTH-TOKEN", token);
-                    cookie.setMaxAge(30 * 60);
-                    response.addCookie(cookie);
+//                    response.setHeader("X-AUTH-TOKEN", accessToken);
+                    Cookie accessCookie = new Cookie("X-AUTH-ACCESS-TOKEN", accessToken);
+                    Cookie refreshCookie = new Cookie("X-AUTH-REFRESH-TOKEN", refreshToken);
+                    accessCookie.setMaxAge(30 * 60);
+                    refreshCookie.setMaxAge(3 * 24 * 60 * 60);
+                    response.addCookie(accessCookie);
+                    response.addCookie(refreshCookie);
                 }catch (Exception e){
                     throw new JwtSetCookieException();
                 }

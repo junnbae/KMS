@@ -20,10 +20,11 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain) throws IOException, ServletException{
-        String token = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest);
+        String accessToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-ACCESS-TOKEN");
+        String refreshToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-REFRESH-TOKEN");
 
-        if(token != null && jwtTokenProvider.validateToken(token)){
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+        if(accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
+            Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 //            System.out.println("토큰 유효");
         }

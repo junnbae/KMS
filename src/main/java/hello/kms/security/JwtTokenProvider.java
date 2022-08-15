@@ -1,6 +1,5 @@
 package hello.kms.security;
 
-import hello.kms.exception.TokenNotFoundException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -31,7 +30,7 @@ public class JwtTokenProvider {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
-    public String createToken(String memberId, List<String> roles){
+    public String createAccessToken(String memberId, List<String> roles){
         Claims claims = Jwts.claims().setSubject(memberId);
         claims.put("roles",roles);
         Date now = new Date();
@@ -44,22 +43,35 @@ public class JwtTokenProvider {
                 .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
     }
+    public String createRefreshToken(String memberId, List<String> roles){
+        Claims claims = Jwts.claims().setSubject(memberId);
+        claims.put("roles",roles);
+        Date now = new Date();
+
+        long tokenValidTime = 3 * 24 * 60 * 60 * 1000L;
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + tokenValidTime))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+    }
 
     public Authentication getAuthentication(String token){
-        UserDetails userDetails = userDetailsService.loadUserByUsername(this.getMemberId(token));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(this.getUserId(token));
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
-    public String getMemberId(String token){
+    public String getUserId(String token){
         return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
     }
 
-    public String resolveToken(HttpServletRequest request){
+    public String resolveToken(HttpServletRequest request, String tokenName){
 //        return request.getHeader("X-AUTH-TOKEN");
         if(request.getCookies() != null) {
             Cookie[] cookies = request.getCookies();
             for (Cookie cookie : cookies) {
-                if ("X-AUTH-TOKEN".equals(cookie.getName()))
+                if (tokenName.equals(cookie.getName()))
                     return cookie.getValue();
             }
         }

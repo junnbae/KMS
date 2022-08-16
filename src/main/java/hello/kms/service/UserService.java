@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 @Transactional

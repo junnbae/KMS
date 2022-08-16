@@ -6,6 +6,7 @@ import hello.kms.domain.SummonerAccount;
 import hello.kms.domain.SummonerInfo;
 import hello.kms.exception.RiotApiException;
 import hello.kms.exception.SummonerNameNotExist;
+import lombok.RequiredArgsConstructor;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -16,9 +17,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class RiotApiService {
+    private final ChamMap champIdMap;
+    
     String serverUrl = "https://kr.api.riotgames.com";
     @Value("${riot_api_key}")
     private String apiKey;
@@ -44,25 +50,6 @@ public class RiotApiService {
             throw new RiotApiException();
         }
     }
-
-    public RotationChampions getRotationChampion() {
-        try {
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpGet httpGet = new HttpGet(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
-            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            if (httpResponse.getStatusLine().getStatusCode() == 200) {
-                ResponseHandler<String> handler = new BasicResponseHandler();
-                String body = handler.handleResponse(httpResponse);
-                return objectMapper.readValue(body, RotationChampions.class);
-            }
-            throw new RiotApiException();
-        }catch (Exception e) {
-            throw new RiotApiException();
-        }
-    }
-
     public SummonerInfo[] getSummonerInfo(HttpServletRequest request) {
         String id = getSummonerAccount(request).getId();
         try{
@@ -78,6 +65,38 @@ public class RiotApiService {
             }
             throw new RiotApiException();
         }catch (Exception e){
+            throw new RiotApiException();
+        }
+    }
+
+    public RotationChampions getRotationChampion() {
+        try {
+            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet httpGet = new HttpGet(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
+            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            if (httpResponse.getStatusLine().getStatusCode() == 200) {
+                ResponseHandler<String> handler = new BasicResponseHandler();
+                String body = handler.handleResponse(httpResponse);
+                RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);
+
+                List<String> freeChampList = new ArrayList<>();
+                for(Integer freeChampionId : rotationChampions.getFreeChampionIds()){
+                    freeChampList.add(champIdMap.getChampIdMap().get(freeChampionId));
+                }
+                rotationChampions.setFreeChampionNames(freeChampList);
+
+                List<String> freeChampForNewPlayersList = new ArrayList<>();
+                for(Integer freeChampionIdForNewPlayer : rotationChampions.getFreeChampionIdsForNewPlayers()){
+                    freeChampForNewPlayersList.add(champIdMap.getChampIdMap().get(freeChampionIdForNewPlayer));
+                }
+                rotationChampions.setFreeChampionNamesForNewPlayers(freeChampForNewPlayersList);
+
+                return rotationChampions;
+            }
+            throw new RiotApiException();
+        }catch (Exception e) {
             throw new RiotApiException();
         }
     }

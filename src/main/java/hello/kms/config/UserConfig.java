@@ -16,7 +16,7 @@ public class UserConfig {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
-    public UserService memberService(){
+    public UserService userService(){
         return new UserService(userRepository, bCryptPasswordEncoder, jwtTokenProvider);
     }
 }

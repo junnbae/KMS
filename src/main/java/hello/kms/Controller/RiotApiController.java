@@ -25,7 +25,7 @@ public class RiotApiController {
 
     @GetMapping("/search/riot-api/rotation")
     @ResponseBody
-    public RotationChampions rotationChampion() {
+    public RotationChampions rotationChampion() throws IOException {
         return riotApiService.getRotationChampion();
     }
 

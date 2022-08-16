@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Summoner {
+public class SummonerMatch {
     private String type;
     private String timeStamp;
     private String result;

@@ -1,6 +1,6 @@
 package hello.kms.service;
 
-import hello.kms.domain.Summoner;
+import hello.kms.domain.SummonerMatch;
 import hello.kms.exception.CrawlingConnectionException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -9,7 +9,6 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,10 +36,10 @@ public class CrawService {
         }
     }
 
-    public List<Summoner> getRecentGame(HttpServletRequest request)throws IOException {
+    public List<SummonerMatch> getRecentGame(HttpServletRequest request) {
         String summoner = request.getParameter("summoner").replaceAll(" ", "%20");
         String url = "https://www.op.gg/summoners/kr/" + summoner;
-//        try {
+        try {
             Document doc = Jsoup.connect(url).get();
             Elements elementsResult = doc.select(".game");
             Elements elementsKda = doc.select(".kda");
@@ -52,10 +51,10 @@ public class CrawService {
             Iterator<Element> elementIteratorKda = elementsKda.select(".k-d-a").iterator();
 
             int count = 0;
-            List<Summoner> nameResult = new ArrayList<>();
+            List<SummonerMatch> nameResult = new ArrayList<>();
 
-            while(elementIteratorResult.hasNext() && count < 7){
-                Summoner temp = new Summoner();
+            while(elementIteratorResult.hasNext() && count < 10){
+                SummonerMatch temp = new SummonerMatch();
                 String[] kda = elementIteratorKda.next().text().replaceAll(" ", "").split("/");
 
                 temp.setType(elementIteratorType.next().text());
@@ -71,8 +70,8 @@ public class CrawService {
             }
 
             return nameResult;
-//        } catch (Exception e) {
-//            throw new CrawlingConnectionException();
-//        }
+        } catch (Exception e) {
+            throw new CrawlingConnectionException();
+        }
     }
 }

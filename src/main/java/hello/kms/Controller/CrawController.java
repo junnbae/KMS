@@ -5,12 +5,9 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import hello.kms.domain.Summoner;
-import hello.kms.exception.CrawlingConnectionException;
+import hello.kms.domain.SummonerMatch;
 import hello.kms.service.CrawService;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -27,7 +24,7 @@ public class CrawController {
 
     @GetMapping("/search/recentGame")
     @ResponseBody
-    public List<Summoner> recentGame(HttpServletRequest request) throws IOException {
+    public List<SummonerMatch> recentGame(HttpServletRequest request) throws IOException {
         return crawService.getRecentGame(request);
     }
 }

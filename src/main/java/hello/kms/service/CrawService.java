@@ -1,5 +1,6 @@
 package hello.kms.service;
 
+import hello.kms.domain.MostChamp;
 import hello.kms.domain.SummonerMatch;
 import hello.kms.exception.CrawlingConnectionException;
 import org.jsoup.Jsoup;
@@ -15,29 +16,42 @@ import java.util.List;
 
 @Service
 public class CrawService {
-    public List<String> getMostChamp(HttpServletRequest request) {
-        String summoner = request.getParameter("summoner").replaceAll(" ", "%20");
+    public List<MostChamp> getMostChamp(HttpServletRequest request) {
+        String summoner = request.getParameter("summoner").replaceAll(" ", "");
         String url = "https://www.op.gg/summoners/kr/" + summoner;
-        System.out.println("url = " + url);
         try {
             Document doc = Jsoup.connect(url).get();
-            Elements elements = doc.select(".champion-box");
+            Elements elementsName = doc.select(".champion-box").select(".info");
+            Elements elementsInfo = doc.select(".champion-box");
 
             int count = 0;
-            List<String> nameResult = new ArrayList<>();
-            Iterator<Element> elementsIterator = elements.select(".name").iterator();
-            while (elementsIterator.hasNext() && count < 3) {
-                nameResult.add(elementsIterator.next().text());
+            List<MostChamp> result = new ArrayList<>();
+            Iterator<Element> elementsNameIterator = elementsName.select(".name").iterator();
+            Iterator<Element> elementsKdaIterator = elementsInfo.select(".kda").iterator();
+            Iterator<Element> elementsCountIterator = elementsInfo.select(".played").iterator();
+
+            while (elementsNameIterator.hasNext() && count < 3) {
+                MostChamp mostChamp = new MostChamp();
+                String[] WinRateCount = elementsCountIterator.next().text().split(" ");
+                int winRate = Integer.parseInt(WinRateCount[0].replaceAll("%", ""));
+                int GameCount = Integer.parseInt(WinRateCount[1]);
+
+                mostChamp.setChampion(elementsNameIterator.next().text());
+                mostChamp.setKda(Double.parseDouble(elementsKdaIterator.next().text().split(":")[0]));
+                mostChamp.setWinRate(winRate);
+                mostChamp.setCount(GameCount);
+
+                result.add(mostChamp);
                 count += 1;
             }
-            return nameResult;
+            return result;
         } catch (Exception e) {
             throw new CrawlingConnectionException();
         }
     }
 
     public List<SummonerMatch> getRecentGame(HttpServletRequest request) {
-        String summoner = request.getParameter("summoner").replaceAll(" ", "%20");
+        String summoner = request.getParameter("summoner").replaceAll(" ", "");
         String url = "https://www.op.gg/summoners/kr/" + summoner;
         try {
             Document doc = Jsoup.connect(url).get();
@@ -54,18 +68,18 @@ public class CrawService {
             List<SummonerMatch> nameResult = new ArrayList<>();
 
             while(elementIteratorResult.hasNext() && count < 10){
-                SummonerMatch temp = new SummonerMatch();
+                SummonerMatch summonerMatch = new SummonerMatch();
                 String[] kda = elementIteratorKda.next().text().replaceAll(" ", "").split("/");
 
-                temp.setType(elementIteratorType.next().text());
-                temp.setResult(elementIteratorResult.next().text());
-                temp.setTimeStamp(elementIteratorTimeStamp.next().text());
-                temp.setKill(Integer.parseInt(kda[0]));
-                temp.setDeath(Integer.parseInt(kda[1]));
-                temp.setAssist(Integer.parseInt(kda[2]));
-                temp.setChampion(elementsChampion.get(count).attr("alt"));
+                summonerMatch.setType(elementIteratorType.next().text());
+                summonerMatch.setResult(elementIteratorResult.next().text());
+                summonerMatch.setTimeStamp(elementIteratorTimeStamp.next().text());
+                summonerMatch.setKill(Integer.parseInt(kda[0]));
+                summonerMatch.setDeath(Integer.parseInt(kda[1]));
+                summonerMatch.setAssist(Integer.parseInt(kda[2]));
+                summonerMatch.setChampion(elementsChampion.get(count).attr("alt"));
 
-                nameResult.add(temp);
+                nameResult.add(summonerMatch);
                 count += 1;
             }
 

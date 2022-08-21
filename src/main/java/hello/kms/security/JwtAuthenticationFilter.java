@@ -1,5 +1,8 @@
 package hello.kms.security;
 
+import hello.kms.domain.User;
+import hello.kms.exception.RefreshTokenCorruptedException;
+import hello.kms.exception.RefreshTokenExpirationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,6 +14,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @RequiredArgsConstructor
@@ -23,11 +27,23 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
         String accessToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-ACCESS-TOKEN");
         String refreshToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-REFRESH-TOKEN");
 
-        if(accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
-            Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-//            System.out.println("토큰 유효");
+        try{
+            if(refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
+                User user = jwtTokenProvider.findUser(refreshToken);
+                if(!user.getRefreshToken().equals(refreshToken)){
+                    throw new RefreshTokenCorruptedException();
+                }
+
+                if (accessToken == null || !jwtTokenProvider.validateToken(accessToken)) {
+                    accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), (HttpServletResponse) servletResponse);
+                }
+                Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        }catch(Exception e){
+            throw new RefreshTokenExpirationException();
         }
+
         chain.doFilter(servletRequest, servletResponse);
     }
 }

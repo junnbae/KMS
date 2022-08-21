@@ -1,4 +1,4 @@
-package hello.kms.service;
+package hello.kms.domain;
 
 import lombok.Getter;
 import org.springframework.stereotype.Component;

@@ -1,6 +1,6 @@
 package hello.kms.config;
 
-import hello.kms.service.ChamMap;
+import hello.kms.domain.ChamMap;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

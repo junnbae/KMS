@@ -24,12 +24,14 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userPk;
 
-    @Column(nullable = false, unique = true, length = 30)
+    @Column( unique = true, length = 30)
     private String userId;
-    @Column(nullable = false, length = 200)
+    @Column( length = 200)
     private String password;
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private String userName;
+    @Column(length = 200)
+    private String refreshToken;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> roles = new ArrayList<>();

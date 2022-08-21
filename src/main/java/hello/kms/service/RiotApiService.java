@@ -1,6 +1,7 @@
 package hello.kms.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hello.kms.domain.ChamMap;
 import hello.kms.domain.RotationChampions;
 import hello.kms.domain.SummonerAccount;
 import hello.kms.domain.SummonerInfo;

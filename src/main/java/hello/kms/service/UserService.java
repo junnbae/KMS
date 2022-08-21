@@ -46,26 +46,33 @@ public class UserService {
                 });
     }
 
-    public User login(LoginUserForm form, HttpServletResponse response){
+    public void login(LoginUserForm form, HttpServletResponse response){
         Optional<User> findUser = userRepository.findByUserId(form.getUserId());
         if(findUser.isPresent()){
             User user = findUser.get();
             if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
-                String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
-                String refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getRoles());
-
+                String refreshToken;
                 try {
-//                    response.setHeader("X-AUTH-TOKEN", accessToken);
-                    Cookie accessCookie = new Cookie("X-AUTH-ACCESS-TOKEN", accessToken);
-                    Cookie refreshCookie = new Cookie("X-AUTH-REFRESH-TOKEN", refreshToken);
-                    accessCookie.setMaxAge(30 * 60);
-                    refreshCookie.setMaxAge(3 * 24 * 60 * 60);
-                    response.addCookie(accessCookie);
-                    response.addCookie(refreshCookie);
+                    jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), response);
+                    refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getRoles(), response);
                 }catch (Exception e){
                     throw new JwtSetCookieException();
                 }
-                return user;
+
+                try{
+                    userRepository.save(User.builder()
+                        .userPk(user.getUserPk())
+                        .userId(user.getUserId())
+                        .password(user.getPassword())
+                        .userName(user.getUsername())
+                        .roles(user.getRoles())
+                        .refreshToken(refreshToken)
+                        .build());
+                    return;
+
+                }catch (Exception e){
+                    throw new SaveRefreshToeknException();
+                }
             }else{
                 throw new PasswordNotMatchException();
             }

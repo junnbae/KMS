@@ -23,9 +23,9 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain) throws IOException, ServletException{
-        String accessToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-ACCESS-TOKEN");
-        String refreshToken = jwtTokenProvider.resolveToken((HttpServletRequest) servletRequest, "X-AUTH-REFRESH-TOKEN");
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException{
+        String accessToken = jwtTokenProvider.resolveToken((HttpServletRequest) request, "X-AUTH-ACCESS-TOKEN");
+        String refreshToken = jwtTokenProvider.resolveToken((HttpServletRequest) request, "X-AUTH-REFRESH-TOKEN");
 
         try{
             if(refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 }
 
                 if (accessToken == null || !jwtTokenProvider.validateToken(accessToken)) {
-                    accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), (HttpServletResponse) servletResponse);
+                    accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), (HttpServletResponse) response);
                 }
                 Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -44,6 +44,6 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
             throw new RefreshTokenExpirationException();
         }
 
-        chain.doFilter(servletRequest, servletResponse);
+        chain.doFilter(request, response);
     }
 }

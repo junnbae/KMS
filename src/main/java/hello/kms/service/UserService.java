@@ -24,7 +24,7 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public User register(RegisterUserForm form) {
+    public void register(RegisterUserForm form) {
         validateRegisterInput(form);
         validateDuplicateMember(form.getUserId());
         form.setPassword(bCryptPasswordEncoder.encode(form.getPassword()));
@@ -36,7 +36,7 @@ public class UserService {
                 .roles(Collections.singletonList("ROLE_USER"))
                 .build();
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     private void validateDuplicateMember(String memberId){
@@ -51,9 +51,9 @@ public class UserService {
         if(findUser.isPresent()){
             User user = findUser.get();
             if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
-                String refreshToken;
+                String refreshToken = null;
                 try {
-                    jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), response);
+                    String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), response);
                     refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getRoles(), response);
                 }catch (Exception e){
                     throw new JwtSetCookieException();
@@ -82,9 +82,12 @@ public class UserService {
 
     public void logout(HttpServletResponse response) {
         try {
-            Cookie cookie = new Cookie("X-AUTH-TOKEN", null);
-            cookie.setMaxAge(0);
-            response.addCookie(cookie);
+            Cookie accessCookie = new Cookie("X-AUTH-ACCESS-TOKEN", null);
+            accessCookie.setMaxAge(0);
+            response.addCookie(accessCookie);
+            Cookie refreshCookie = new Cookie("X-AUTH-REFRESH-TOKEN", null);
+            refreshCookie.setMaxAge(0);
+            response.addCookie(refreshCookie);
         } catch (Exception e) {
             throw new JwtDelCookieException();
         }

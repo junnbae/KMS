@@ -3,14 +3,15 @@ package hello.kms.domain;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 @Component
 @Getter
-public class ChamMap {
-    private final HashMap<Integer, String> ChampIdMap = new HashMap<>();
+public class ChampMap {
+    private final Map<Integer, String> ChampIdMap = new WeakHashMap<>();
 
-    public ChamMap() {
+    public ChampMap() {
         ChampIdMap.put(266, "Aatrox");
         ChampIdMap.put(103, "Ahri");
         ChampIdMap.put(84, "Akali");
@@ -65,7 +66,7 @@ public class ChamMap {
         ChampIdMap.put(145, "Kaisa");
         ChampIdMap.put(429, "Kalista");
         ChampIdMap.put(43, "Karma");
-        ChampIdMap.put(30, "karthus");
+        ChampIdMap.put(30, "Karthus");
         ChampIdMap.put(38, "Kassadin");
         ChampIdMap.put(55, "Katarina");
         ChampIdMap.put(10, "Kayle");

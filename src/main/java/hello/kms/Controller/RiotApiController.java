@@ -6,9 +6,7 @@ import hello.kms.domain.SummonerInfo;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -26,6 +24,13 @@ public class RiotApiController {
     }
 
     @CrossOrigin
+    @GetMapping("/search/riot-api/recentGame")
+    @ResponseBody
+    public void recentGame(HttpServletRequest request) {
+        riotApiService.getRecentGame(request);
+    }
+
+    @CrossOrigin
     @GetMapping("/search/riot-api/rotation")
     @ResponseBody
     public RotationChampions rotationChampion() throws IOException {
@@ -36,6 +41,6 @@ public class RiotApiController {
     @GetMapping("search/riot-api/summonerInfo")
     @ResponseBody
     public SummonerInfo InfoByName(HttpServletRequest request) throws IOException {
-        return riotApiService.getSummonerInfo(request)[0];
+        return riotApiService.getSummonerInfo(request);
     }
 }

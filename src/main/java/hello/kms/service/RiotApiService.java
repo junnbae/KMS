@@ -11,16 +11,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +33,7 @@ public class RiotApiService {
     @Value("${riot_api_key}")
     private String apiKey;
 
-    public SummonerAccount getSummonerAccount(HttpServletRequest request) {
+    public JSONObject getSummonerAccount(HttpServletRequest request) {
         String name = request.getParameter("summoner");
         name = name.replaceAll(" ", "%20");
 
@@ -55,17 +57,17 @@ public class RiotApiService {
             }
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             ResponseHandler<String> handler = new BasicResponseHandler();
             String body = handler.handleResponse(httpResponse);
-            return objectMapper.readValue(body, SummonerAccount.class);
+            JSONParser jsonParser = new JSONParser();
+            return (JSONObject) jsonParser.parse(body);
         } catch (Exception e) {
             throw new RuntimeException("Cannot Read Value from Riot");
         }
     }
 
-    public SummonerInfo getSummonerInfo(HttpServletRequest request) {
-        String id = getSummonerAccount(request).getId();
+    public JSONObject getSummonerInfo(HttpServletRequest request) {
+        String id = (String) getSummonerAccount(request).get("id");
         CloseableHttpResponse httpResponse = null;
         try {
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
@@ -76,11 +78,12 @@ public class RiotApiService {
         }
 
         try{
-            ObjectMapper objectMapper = new ObjectMapper();
             ResponseHandler<String> handler = new BasicResponseHandler();
             String body = handler.handleResponse(httpResponse);
-            SummonerInfo[] result = objectMapper.readValue(body, SummonerInfo[].class);
-            return result[0];
+            body = body.replace("[", "");
+            body = body.replace("]", "");
+            JSONParser jsonParser = new JSONParser();
+            return (JSONObject) jsonParser.parse(body);
         }catch (Exception e){
             throw new RuntimeException("Cannot Read Value from Riot");
         }
@@ -102,7 +105,6 @@ public class RiotApiService {
             body = body.replaceAll("[\"]","");
             body = body.replace("[", "");
             body = body.replace("]", "");
-
             String[] matchId = body.split(",");
             Arrays.sort(matchId, Collections.reverseOrder());
             return matchId;
@@ -111,33 +113,60 @@ public class RiotApiService {
         }
     }
 
-    public String getRecentGame(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
-        String puuId = summonerAccount.getPuuid();
-        String name = summonerAccount.getName();
+    public JSONArray getRecentGame(HttpServletRequest request){
+        JSONObject summonerAccount = getSummonerAccount(request);
+        String puuId = (String) summonerAccount.get("puuid");
+        String name = (String) summonerAccount.get("name");
         String[] matchId = getMatchId(puuId);
-        
-        for(int i = 0; i < 2; i++){
+
+        JSONArray result = new JSONArray();
+        for (String s : matchId) {
             CloseableHttpResponse httpResponse = null;
+            JSONObject element = new JSONObject();
+
             try {
                 CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-                HttpGet httpGet = new HttpGet("https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId[i] + "?api_key=" + apiKey);
+                HttpGet httpGet = new HttpGet("https://asia.api.riotgames.com/lol/match/v5/matches/" + s + "?api_key=" + apiKey);
                 httpResponse = httpClient.execute(httpGet);
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException("Cannot Get Response from Riot");
             }
-            
-            try{
-                ObjectMapper objectMapper = new ObjectMapper();
+
+            try {
+                JSONParser jsonParser = new JSONParser();
                 ResponseHandler<String> handler = new BasicResponseHandler();
                 String body = handler.handleResponse(httpResponse);
-//                System.out.println(objectMapper.readValue(body, RecentGame.class));
-//                System.out.println("body = " + body);
-                return body;
-            }catch (Exception e){
-                throw new RuntimeException("Cannot Read Value from Riot");
+
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(body);
+
+                JSONObject info = (JSONObject) jsonObject.get("info");
+                SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" , Locale.KOREA );
+                Long timestamp = (Long) info.get("gameEndTimestamp");
+                String date = sdf.format(timestamp);
+
+                element.put("timeStamp", date);
+
+                JSONArray participants = (JSONArray) info.get("participants");
+                for (Object participant : participants) {
+                    JSONObject p = (JSONObject) participant;
+
+                    if (name.equals(p.get("summonerName"))){
+                        element.put("win", p.get("win"));
+                        element.put("champion", p.get("championName"));
+                        element.put("kill", p.get("kills"));
+                        element.put("death", p.get("deaths"));
+                        element.put("assist", p.get("assists"));
+                        result.add(element);
+                        break;
+                    }
+
+                }
+            } catch (Exception e) {
+                System.out.println("e = " + e);
+//                throw new RuntimeException("Cannot Read Value from Riot");
             }
         }
+        return result;
     }
 
     public RotationChampions getRotationChampion() {

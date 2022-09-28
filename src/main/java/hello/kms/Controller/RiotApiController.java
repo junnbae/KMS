@@ -1,10 +1,10 @@
 package hello.kms.Controller;
 
 import hello.kms.domain.RotationChampions;
-import hello.kms.domain.SummonerAccount;
-import hello.kms.domain.SummonerInfo;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +19,15 @@ public class RiotApiController {
     @CrossOrigin
     @GetMapping("/search/riot-api/summonerAccount")
     @ResponseBody
-    public SummonerAccount AccountByName(HttpServletRequest request) {
+    public JSONObject AccountByName(HttpServletRequest request) {
         return riotApiService.getSummonerAccount(request);
     }
 
     @CrossOrigin
     @GetMapping("/search/riot-api/recentGame")
     @ResponseBody
-    public void recentGame(HttpServletRequest request) {
-        riotApiService.getRecentGame(request);
+    public JSONArray recentGame(HttpServletRequest request) {
+        return riotApiService.getRecentGame(request);
     }
 
     @CrossOrigin
@@ -40,7 +40,7 @@ public class RiotApiController {
     @CrossOrigin
     @GetMapping("search/riot-api/summonerInfo")
     @ResponseBody
-    public SummonerInfo InfoByName(HttpServletRequest request) throws IOException {
+    public JSONObject InfoByName(HttpServletRequest request) throws IOException {
         return riotApiService.getSummonerInfo(request);
     }
 }

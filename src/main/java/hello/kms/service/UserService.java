@@ -42,7 +42,7 @@ public class UserService {
     private void validateDuplicateMember(String memberId){
         userRepository.findByUserId(memberId)
                 .ifPresent(m -> {
-                    throw new IdExistException();
+                    throw new RuntimeException("The ID that already exists.");
                 });
     }
 
@@ -56,7 +56,7 @@ public class UserService {
                     String accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), response);
                     refreshToken = jwtTokenProvider.createRefreshToken(user.getUserId(), user.getRoles(), response);
                 }catch (Exception e){
-                    throw new JwtSetCookieException();
+                    throw new RuntimeException("Can not set cookie");
                 }
 
                 try{
@@ -71,13 +71,13 @@ public class UserService {
                     return;
 
                 }catch (Exception e){
-                    throw new SaveRefreshToeknException();
+                    throw new RuntimeException("Failed to save refresh token to DB");
                 }
             }else{
-                throw new PasswordNotMatchException();
+                throw new RuntimeException("The password is not match");
             }
         }
-        throw new IdNotExistException();
+        throw new RuntimeException("The ID is not exist.");
     }
 
     public void logout(HttpServletResponse response) {
@@ -89,7 +89,7 @@ public class UserService {
             refreshCookie.setMaxAge(0);
             response.addCookie(refreshCookie);
         } catch (Exception e) {
-            throw new JwtDelCookieException();
+            throw new RuntimeException("Cannot delete cookie");
         }
     }
 
@@ -99,7 +99,7 @@ public class UserService {
 
     public void validateRegisterInput(RegisterUserForm form){
         if(form.getUserId() == null || form.getPassword() == null || form.getUserName() == null){
-            throw new RegisterInputException();
+            throw new RuntimeException("Input is not valid.");
         }
     }
 }

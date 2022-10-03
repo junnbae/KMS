@@ -1,24 +1,34 @@
-//package hello.kms.domain;
-//
-//import com.fasterxml.jackson.annotation.JsonProperty;
-//import lombok.Getter;
-//import lombok.Setter;
-//
-//@Getter
-//@Setter
-//public class SummonerAccount {
-//    @JsonProperty("id")
-//    private String id;
-//    @JsonProperty("accountId")
-//    private String accountId;
-//    @JsonProperty("puuid")
-//    private String puuid;
-//    @JsonProperty("name")
-//    private String name;
-//    @JsonProperty("profileIconId")
-//    private String profileIconId;
-//    @JsonProperty("revisionDate")
-//    private String revisionDate;
-//    @JsonProperty("summonerLevel")
-//    private String summonerLevel;
-//}
+package hello.kms.domain;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+import javax.persistence.*;
+
+@Getter
+@Setter
+@Entity(name="summonerAccount")
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
+public class SummonerAccount {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int summoner_account_pk;
+
+    @Column
+    private String id;
+    @Column
+    private String account_id;
+    @Column
+    private String puuid;
+    @Column
+    private String name;
+    @Column
+    private int profile_iconId;
+    @Column
+    private long revision_date;
+    @Column
+    private int summoner_level;
+}

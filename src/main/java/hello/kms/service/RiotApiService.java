@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
 import hello.kms.exception.RiotApiException;
 import hello.kms.exception.SummonerNameNotExist;
+import hello.kms.repository.SummonerAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -28,6 +28,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class RiotApiService {
     private final ChampMap champIdMap;
+    private final SummonerAccountRepository summonerAccountRepository;
     
     String serverUrl = "https://kr.api.riotgames.com";
     @Value("${riot_api_key}")
@@ -37,6 +38,7 @@ public class RiotApiService {
         String name = request.getParameter("summoner");
         name = name.replaceAll(" ", "%20");
 
+        System.out.println("summonerAccountRepository = " + summonerAccountRepository.findByName(name));
         CloseableHttpResponse httpResponse = null;
         try {
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
@@ -144,6 +146,7 @@ public class RiotApiService {
                 Long timestamp = (Long) info.get("gameEndTimestamp");
                 String date = sdf.format(timestamp);
 
+                element.put("queueId", info.get("queueId"));
                 element.put("timeStamp", date);
 
                 JSONArray participants = (JSONArray) info.get("participants");

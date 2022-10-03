@@ -2,7 +2,6 @@ package hello.kms.service;
 
 import hello.kms.domain.MostChamp;
 import hello.kms.domain.SummonerMatch;
-import hello.kms.exception.CrawlingConnectionException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -46,7 +45,7 @@ public class CrawService {
             }
             return result;
         } catch (Exception e) {
-            throw new CrawlingConnectionException();
+            throw new RuntimeException("Crawling connection failed");
         }
     }
 
@@ -85,7 +84,7 @@ public class CrawService {
 
             return nameResult;
         } catch (Exception e) {
-            throw new CrawlingConnectionException();
+            throw new RuntimeException("Crawling connection failed");
         }
     }
 }

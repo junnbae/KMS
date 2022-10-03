@@ -1,8 +1,6 @@
 package hello.kms.security;
 
 import hello.kms.domain.User;
-import hello.kms.exception.RefreshTokenCorruptedException;
-import hello.kms.exception.RefreshTokenExpirationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +14,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.rmi.RemoteException;
 
 @RequiredArgsConstructor
 @Component
@@ -31,7 +30,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
             if(refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
                 User user = jwtTokenProvider.findUser(refreshToken);
                 if(!user.getRefreshToken().equals(refreshToken)){
-                    throw new RefreshTokenCorruptedException();
+                    throw new RemoteException("The refresh token is corrupted.");
                 }
 
                 if (accessToken == null || !jwtTokenProvider.validateToken(accessToken)) {
@@ -41,7 +40,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }catch(Exception e){
-            throw new RefreshTokenExpirationException();
+            throw new RuntimeException("Refresh Token has expired");
         }
 
         chain.doFilter(request, response);

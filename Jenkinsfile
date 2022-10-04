@@ -11,7 +11,7 @@ pipeline {
         stage('Docker build') {
             agent any
             steps {
-                sh 'docker build -t springio/gs-spring-boot-docker /home/ubuntu/.'
+                sh 'docker build -t springio/gs-spring-boot-docker /var/jenkins_home/workspace/kms'
             }
         }
         stage('Docker run') {

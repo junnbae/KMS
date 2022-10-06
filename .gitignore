@@ -1,6 +1,7 @@
 HELP.md
 .gradle
 
+build
 build/classes
 build/generated
 build/reports

@@ -1,8 +1,14 @@
 HELP.md
 .gradle
-build/
-!build/libs/kms-0.0.1-SNAPSHOT.jar
 
+build/classes
+build/generated
+build/reports
+build/resources
+build/test-results
+build/tmp
+
+gradle
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 

@@ -1,6 +1,7 @@
 package hello.kms.repository;
 
 import hello.kms.domain.SummonerAccount;
+import org.json.simple.JSONObject;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

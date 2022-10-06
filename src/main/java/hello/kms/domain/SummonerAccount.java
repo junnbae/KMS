@@ -8,9 +8,9 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity(name="summonerAccount")
-@NoArgsConstructor
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class SummonerAccount {
 
     @Id
@@ -20,15 +20,15 @@ public class SummonerAccount {
     @Column
     private String id;
     @Column
-    private String account_id;
+    private String accountId;
     @Column
     private String puuid;
     @Column
     private String name;
     @Column
-    private int profile_iconId;
+    private int profileIconId;
     @Column
-    private long revision_date;
+    private long revisionDate;
     @Column
-    private int summoner_level;
+    private long summonerLevel;
 }

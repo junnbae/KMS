@@ -1,36 +1,45 @@
-//package hello.kms.domain;
-//
-//import com.fasterxml.jackson.annotation.JsonProperty;
-//import lombok.Getter;
-//import lombok.Setter;
-//
-//@Getter
-//@Setter
-//public class SummonerInfo {
-//    @JsonProperty("leagueId")
-//    private String leagueId;
-//    @JsonProperty("summonerId")
-//    private String summonerId;
-//    @JsonProperty("summonerName")
-//    private String summonerName;
-//    @JsonProperty("queueType")
-//    private String queueType;
-//    @JsonProperty("tier")
-//    private String tier;
-//    @JsonProperty("rank")
-//    private String rank;
-//    @JsonProperty("leaguePoints")
-//    private int leaguePoints;
-//    @JsonProperty("wins")
-//    private int wins;
-//    @JsonProperty("losses")
-//    private int loses;
-//    @JsonProperty("hotStreak")
-//    private boolean hotStreak;
-//    @JsonProperty("veteran")
-//    private boolean veteran;
-//    @JsonProperty("freshBlood")
-//    private boolean freshBlood;
-//    @JsonProperty("inactive")
-//    private boolean inactive;
-//}
+package hello.kms.domain;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.*;
+
+import javax.persistence.*;
+
+@Getter
+@Setter
+@Builder
+@Entity(name="summonerInfo")
+@AllArgsConstructor
+@NoArgsConstructor
+public class SummonerInfo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int summoner_info_pk;
+
+    @Column(name="league_id")
+    private String leagueId;
+    @Column(name="summoner_id")
+    private String summonerId;
+    @Column(name="summoner_name")
+    private String summonerName;
+    @Column(name="queue_type")
+    private String queueType;
+    @Column(name="tier")
+    private String tier;
+    @Column(name="rank")
+    private String rank;
+    @Column(name="league_points")
+    private int leaguePoints;
+    @Column(name="wins")
+    private int wins;
+    @Column(name="losses")
+    private int losses;
+    @Column(name="hot_streak")
+    private boolean hotStreak;
+    @Column(name="veteran")
+    private boolean veteran;
+    @Column(name="fresh_blood")
+    private boolean freshBlood;
+    @Column(name="inactive")
+    private boolean inactive;
+}

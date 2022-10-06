@@ -2,6 +2,7 @@ package hello.kms.config;
 
 import hello.kms.domain.ChampMap;
 import hello.kms.repository.SummonerAccountRepository;
+import hello.kms.repository.SummonerInfoRepository;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +12,9 @@ import org.springframework.context.annotation.Configuration;
 public class RiotApiConfig {
     private final ChampMap champIdMap;
     private final SummonerAccountRepository summonerAccountRepository;
+    private final SummonerInfoRepository summonerInfoRepository;
 
     public RiotApiService riotApiService(){
-        return new RiotApiService(champIdMap, summonerAccountRepository);
+        return new RiotApiService(champIdMap, summonerAccountRepository, summonerInfoRepository);
     }
 }

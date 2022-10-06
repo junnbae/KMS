@@ -1,15 +1,14 @@
 package hello.kms.Controller;
 
 import hello.kms.domain.RotationChampions;
+import hello.kms.domain.SummonerAccount;
+import hello.kms.domain.SummonerInfo;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
 
 @Controller
 @RequiredArgsConstructor
@@ -19,28 +18,28 @@ public class RiotApiController {
     @CrossOrigin
     @GetMapping("/search/riot-api/summonerAccount")
     @ResponseBody
-    public JSONObject AccountByName(HttpServletRequest request) {
+    public SummonerAccount AccountByName(HttpServletRequest request) {
         return riotApiService.getSummonerAccount(request);
     }
 
-    @CrossOrigin
-    @GetMapping("/search/riot-api/recentGame")
-    @ResponseBody
-    public JSONArray recentGame(HttpServletRequest request) {
-        return riotApiService.getRecentGame(request);
-    }
+//    @CrossOrigin
+//    @GetMapping("/search/riot-api/recentGame")
+//    @ResponseBody
+//    public JSONArray recentGame(HttpServletRequest request) {
+//        return riotApiService.getRecentGame(request);
+//    }
 
     @CrossOrigin
     @GetMapping("/search/riot-api/rotation")
     @ResponseBody
-    public RotationChampions rotationChampion() throws IOException {
+    public RotationChampions rotationChampion() {
         return riotApiService.getRotationChampion();
     }
 
     @CrossOrigin
     @GetMapping("search/riot-api/summonerInfo")
     @ResponseBody
-    public JSONObject InfoByName(HttpServletRequest request) throws IOException {
+    public SummonerInfo[] InfoByName(HttpServletRequest request) {
         return riotApiService.getSummonerInfo(request);
     }
 }

@@ -31,4 +31,7 @@ public class SummonerAccount {
     private long revisionDate;
     @Column
     private long summonerLevel;
+
+    @Column
+    private String inputName;
 }

@@ -5,10 +5,12 @@ import hello.kms.domain.SummonerAccount;
 import hello.kms.domain.SummonerInfo;
 import hello.kms.service.RiotApiService;
 import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONArray;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -22,12 +24,19 @@ public class RiotApiController {
         return riotApiService.getSummonerAccount(request);
     }
 
-//    @CrossOrigin
-//    @GetMapping("/search/riot-api/recentGame")
-//    @ResponseBody
-//    public JSONArray recentGame(HttpServletRequest request) {
-//        return riotApiService.getRecentGame(request);
-//    }
+    @CrossOrigin
+    @GetMapping("/search/riot-api/recentGame")
+    @ResponseBody
+    public JSONArray recentGame(HttpServletRequest request) {
+        return riotApiService.getRecentGame(request);
+    }
+
+    @CrossOrigin
+    @GetMapping("/search/riot-api/updateRecentGame")
+    @ResponseBody
+    public JSONArray updateRecentGame(HttpServletRequest request){
+        return riotApiService.updateRecentGame(request);
+    }
 
     @CrossOrigin
     @GetMapping("/search/riot-api/rotation")
@@ -39,7 +48,7 @@ public class RiotApiController {
     @CrossOrigin
     @GetMapping("search/riot-api/summonerInfo")
     @ResponseBody
-    public SummonerInfo[] InfoByName(HttpServletRequest request) {
+    public Optional<SummonerInfo> InfoByName(HttpServletRequest request) {
         return riotApiService.getSummonerInfo(request);
     }
 }

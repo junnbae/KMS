@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
 import hello.kms.exception.RiotApiException;
 import hello.kms.exception.SummonerNameNotExist;
+import hello.kms.repository.MatchIdRepository;
+import hello.kms.repository.RecentGameRepository;
 import hello.kms.repository.SummonerAccountRepository;
 import hello.kms.repository.SummonerInfoRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -30,31 +33,50 @@ public class RiotApiService {
     private final ChampMap champIdMap;
     private final SummonerAccountRepository summonerAccountRepository;
     private final SummonerInfoRepository summonerInfoRepository;
+    private final MatchIdRepository matchIdRepository;
+    private final RecentGameRepository recentGameRepository;
 
     String serverUrl = "https://kr.api.riotgames.com";
     @Value("${riot_api_key}")
     private String apiKey;
 
+    public String getStringFromAPI(String url){
+        try{
+            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+            HttpGet httpGet = new HttpGet(url);
+            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+
+            if (httpResponse.getStatusLine().getStatusCode() == 404) {
+                throw new SummonerNameNotExist();
+            } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
+                throw new RiotApiException();
+            }
+
+            ResponseHandler<String> handler = new BasicResponseHandler();
+
+            String body = handler.handleResponse(httpResponse);
+            httpClient.close();
+            httpResponse.close();
+            return body;
+
+        }catch (SummonerNameNotExist e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Summoner not found");
+        } catch (RiotApiException e) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "API Key is expired");
+        } catch (Exception e) {
+            System.out.println("e = " + e);
+            throw new RuntimeException(e);
+        }
+    }
     public SummonerAccount getSummonerAccount(HttpServletRequest request) {
-        String name = request.getParameter("summoner").replace(" ", "");
-        Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByName(name);
+        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
+        Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByInputName(inputName);
 
         if (getSummonerAccount.isPresent()) {
             return getSummonerAccount.get();
         } else {
             try {
-                CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-                HttpGet httpGet = new HttpGet(serverUrl + "/lol/summoner/v4/summoners/by-name/" + name + "?api_key=" + apiKey);
-                CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-
-                if (httpResponse.getStatusLine().getStatusCode() == 404) {
-                    throw new SummonerNameNotExist();
-                } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
-                    throw new RiotApiException();
-                }
-
-                ResponseHandler<String> handler = new BasicResponseHandler();
-                String body = handler.handleResponse(httpResponse);
+                String body = getStringFromAPI(serverUrl + "/lol/summoner/v4/summoners/by-name/" + inputName + "?api_key=" + apiKey);
                 JSONParser jsonParser = new JSONParser();
                 JSONObject k = (JSONObject) jsonParser.parse(body);
 
@@ -62,14 +84,12 @@ public class RiotApiService {
                         .accountId(String.valueOf(k.get("accountId")))
                         .puuid(String.valueOf(k.get("puuid")))
                         .id(String.valueOf(k.get("id")))
-                        .name(name)
+                        .name(String.valueOf(k.get("name")))
                         .profileIconId(Integer.parseInt(String.valueOf(k.get("profileIconId"))))
                         .revisionDate(Long.parseLong(String.valueOf(k.get("revisionDate"))))
                         .summonerLevel(Long.parseLong(String.valueOf(k.get("summonerLevel"))))
+                        .inputName(inputName)
                         .build();
-
-                httpResponse.close();
-                httpClient.close();
 
                 return summonerAccountRepository.save(summonerAccount);
 
@@ -85,17 +105,18 @@ public class RiotApiService {
     }
 
 
-    public SummonerInfo[] getSummonerInfo(HttpServletRequest request) {
+    public Optional<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
+        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
         String id = summonerAccount.getId();
 
-        try {
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpGet httpGet = new HttpGet("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
-            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+        Optional<SummonerInfo> getSummonerInfo = summonerInfoRepository.findByInputName(inputName);
+        if(getSummonerInfo.isPresent()){
+            return getSummonerInfo;
+        }
 
-            ResponseHandler<String> handler = new BasicResponseHandler();
-            String body = handler.handleResponse(httpResponse);
+        try {
+            String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
             JSONParser jsonParser = new JSONParser();
             JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
 
@@ -117,14 +138,12 @@ public class RiotApiService {
                         .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
                         .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
                         .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
+                        .inputName(inputName)
                         .build();
 
                 summonerInfoRepository.save(summonerInfo[i]);
             }
-            httpClient.close();
-            httpResponse.close();
-
-            return summonerInfo;
+            return summonerInfoRepository.findByInputName(inputName);
 
         }catch (Exception e){
             System.out.println("e = " + e);
@@ -132,120 +151,126 @@ public class RiotApiService {
         }
     }
 
-//    public String[] getMatchId(String puuId){
-//        CloseableHttpResponse httpResponse = null;
-//        try {
-//            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-//            HttpGet httpGet = new HttpGet("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=7&api_key=" + apiKey);
-//            httpResponse = httpClient.execute(httpGet);
-//        }catch (Exception e){
-//            throw new RuntimeException("Cannot Get Response from Riot");
-//        }
-//
-//        try{
-//            ResponseHandler<String> handler = new BasicResponseHandler();
-//            String body = handler.handleResponse(httpResponse);
-//            body = body.replaceAll("[\"]","");
-//            body = body.replace("[", "");
-//            body = body.replace("]", "");
-//            String[] matchId = body.split(",");
-//            Arrays.sort(matchId, Collections.reverseOrder());
-//            return matchId;
-//        }catch (Exception e){
-//            throw new RuntimeException("Cannot Read Value from Riot");
-//        }
-//    }
-//
-//    public JSONArray getRecentGame(HttpServletRequest request){
-//        JSONObject summonerAccount = getSummonerAccount(request);
-//        String puuId = (String) summonerAccount.get("puuid");
-//        String name = (String) summonerAccount.get("name");
-//        String[] matchId = getMatchId(puuId);
-//
-//        JSONArray result = new JSONArray();
-//        for (String s : matchId) {
-//            CloseableHttpResponse httpResponse = null;
-//            JSONObject element = new JSONObject();
-//
-//            try {
-//                CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-//                HttpGet httpGet = new HttpGet("https://asia.api.riotgames.com/lol/match/v5/matches/" + s + "?api_key=" + apiKey);
-//                httpResponse = httpClient.execute(httpGet);
-//            } catch (Exception e) {
-//                throw new RuntimeException("Cannot Get Response from Riot");
-//            }
-//
-//            try {
-//                JSONParser jsonParser = new JSONParser();
-//                ResponseHandler<String> handler = new BasicResponseHandler();
-//                String body = handler.handleResponse(httpResponse);
-//
-//                JSONObject jsonObject = (JSONObject) jsonParser.parse(body);
-//
-//                JSONObject info = (JSONObject) jsonObject.get("info");
-//                SimpleDateFormat sdf = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" , Locale.KOREA );
-//                Long timestamp = (Long) info.get("gameEndTimestamp");
-//                String date = sdf.format(timestamp);
-//
-//                element.put("queueId", info.get("queueId"));
-//                element.put("timeStamp", date);
-//
-//                JSONArray participants = (JSONArray) info.get("participants");
-//                for (Object participant : participants) {
-//                    JSONObject p = (JSONObject) participant;
-//
-//                    if (name.equals(p.get("summonerName"))){
-//                        element.put("win", p.get("win"));
-//                        element.put("champion", p.get("championName"));
-//                        element.put("kill", p.get("kills"));
-//                        element.put("death", p.get("deaths"));
-//                        element.put("assist", p.get("assists"));
-//                        result.add(element);
-//                        break;
-//                    }
-//
-//                }
-//            } catch (Exception e) {
-//                System.out.println("e = " + e);
-////                throw new RuntimeException("Cannot Read Value from Riot");
-//            }
-//        }
-//        return result;
-//    }
-//
+    public List<MatchId> updateMatchId(HttpServletRequest request){
+        SummonerAccount summonerAccount = getSummonerAccount(request);
+        String puuId = summonerAccount.getPuuid();
+        String name = summonerAccount.getName();
+
+        matchIdRepository.deleteAllBySummonerName(name);
+
+        try {
+            String[] body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=7&api_key=" + apiKey)
+                    .replace("\"","")
+                    .replace("[", "")
+                    .replace("]", "")
+                    .split(",");
+
+            for (String s : body) {
+                MatchId matchId = MatchId.builder()
+                        .summonerName(name)
+                        .matchId(String.valueOf(s))
+                        .build();
+                matchIdRepository.save(matchId);
+            }
+            return matchIdRepository.findBySummonerName(name);
+
+        } catch (Exception e) {
+            System.out.println("e = " + e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<MatchId> getMatchId(HttpServletRequest request){
+        String name = request.getParameter("summoner").replace(" ", "");
+        List<MatchId> getMatchId = matchIdRepository.findBySummonerName(name);
+        if(!getMatchId.isEmpty()){
+            return getMatchId;
+        }
+        else {
+            return updateMatchId(request);
+        }
+    }
+
+    public JSONArray getGameByMatchId(String name, List<MatchId> matchIdList){
+        JSONArray result = new JSONArray();
+        for (MatchId matchId : matchIdList) {
+            String id = matchId.getMatchId();
+            Optional<RecentGame> getRecentGame = recentGameRepository.findByMatchId(id);
+            if(getRecentGame.isPresent()){
+                result.add(getRecentGame);
+            }
+            else {
+                try {
+                    String body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/" + id + "?api_key=" + apiKey);
+                    JSONParser jsonParser = new JSONParser();
+                    JSONObject jsonObject = (JSONObject) jsonParser.parse(body);
+
+                    JSONObject info = (JSONObject) jsonObject.get("info");
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.KOREA);
+                    Long timestamp = (Long) info.get("gameEndTimestamp");
+                    String date = sdf.format(timestamp);
+
+                    JSONArray participants = (JSONArray) info.get("participants");
+                    for (Object participant : participants) {
+                        JSONObject p = (JSONObject) participant;
+
+                        if (name.equals(p.get("summonerName"))) {
+                            RecentGame recentGame = RecentGame.builder()
+                                    .matchId(String.valueOf(id))
+                                    .queueId(Integer.parseInt(String.valueOf(info.get("queueId"))))
+                                    .timeStamp(date)
+                                    .win(Boolean.parseBoolean(String.valueOf(p.get("win"))))
+                                    .champion(String.valueOf(p.get("championName")))
+                                    .kill(Integer.parseInt(String.valueOf(p.get("kills"))))
+                                    .death(Integer.parseInt(String.valueOf(p.get("deaths"))))
+                                    .assist(Integer.parseInt(String.valueOf(p.get("assists"))))
+                                    .build();
+
+                            recentGameRepository.save(recentGame);
+                            result.add(recentGame);
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("e = " + e);
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return result;
+    }
+
+    public JSONArray updateRecentGame(HttpServletRequest request){
+        String name = getSummonerAccount(request).getName();
+        List<MatchId> matchIdList = updateMatchId(request);
+        return getGameByMatchId(name, matchIdList);
+    }
+    public JSONArray getRecentGame(HttpServletRequest request){
+        String name = getSummonerAccount(request).getName();
+        List<MatchId> matchIdList = getMatchId(request);
+        return getGameByMatchId(name, matchIdList);
+    }
+
     public RotationChampions getRotationChampion() {
         try {
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpGet httpGet = new HttpGet(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
-            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 
             ObjectMapper objectMapper = new ObjectMapper();
-            if (httpResponse.getStatusLine().getStatusCode() == 200) {
-                ResponseHandler<String> handler = new BasicResponseHandler();
-                String body = handler.handleResponse(httpResponse);
-                RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);
+            String body = getStringFromAPI(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
+            RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);
 
-                List<String> freeChampList = new ArrayList<>();
-                for(Integer freeChampionId : rotationChampions.getFreeChampionIds()){
-                    freeChampList.add(champIdMap.getChampIdMap().get(freeChampionId));
-                }
-                rotationChampions.setFreeChampionNames(freeChampList);
-
-                List<String> freeChampForNewPlayersList = new ArrayList<>();
-                for(Integer freeChampionIdForNewPlayer : rotationChampions.getFreeChampionIdsForNewPlayers()){
-                    freeChampForNewPlayersList.add(champIdMap.getChampIdMap().get(freeChampionIdForNewPlayer));
-                }
-                rotationChampions.setFreeChampionNamesForNewPlayers(freeChampForNewPlayersList);
-
-                httpClient.close();
-                httpResponse.close();
-                return rotationChampions;
-            }else{
-                throw new RiotApiException();
+            List<String> freeChampList = new ArrayList<>();
+            for (Integer freeChampionId : rotationChampions.getFreeChampionIds()) {
+                freeChampList.add(champIdMap.getChampIdMap().get(freeChampionId));
             }
+            rotationChampions.setFreeChampionNames(freeChampList);
 
-        }catch(RiotApiException e){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+            List<String> freeChampForNewPlayersList = new ArrayList<>();
+            for (Integer freeChampionIdForNewPlayer : rotationChampions.getFreeChampionIdsForNewPlayers()) {
+                freeChampForNewPlayersList.add(champIdMap.getChampIdMap().get(freeChampionIdForNewPlayer));
+            }
+            rotationChampions.setFreeChampionNamesForNewPlayers(freeChampForNewPlayersList);
+
+            return rotationChampions;
         }
         catch (Exception e) {
             System.out.println("e = " + e);

@@ -41,4 +41,7 @@ public class SummonerInfo {
     private boolean freshBlood;
     @Column(name="inactive")
     private boolean inactive;
+
+    @Column(name="input_name")
+    private String inputName;
 }

@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
 import hello.kms.exception.RiotApiException;
 import hello.kms.exception.SummonerNameNotExist;
-import hello.kms.repository.MatchIdRepository;
-import hello.kms.repository.RecentGameRepository;
-import hello.kms.repository.SummonerAccountRepository;
-import hello.kms.repository.SummonerInfoRepository;
+import hello.kms.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -35,6 +32,7 @@ public class RiotApiService {
     private final SummonerInfoRepository summonerInfoRepository;
     private final MatchIdRepository matchIdRepository;
     private final RecentGameRepository recentGameRepository;
+    private final ChampionMasteryRepository championMasteryRepository;
 
     String serverUrl = "https://kr.api.riotgames.com";
     @Value("${riot_api_key}")
@@ -104,50 +102,96 @@ public class RiotApiService {
         }
     }
 
-
-    public Optional<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
+    public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
         String id = summonerAccount.getId();
 
-        Optional<SummonerInfo> getSummonerInfo = summonerInfoRepository.findByInputName(inputName);
-        if(getSummonerInfo.isPresent()){
+        List<SummonerInfo> getSummonerInfo = summonerInfoRepository.findByInputName(inputName);
+        if(!getSummonerInfo.isEmpty()){
             return getSummonerInfo;
         }
+        else {
+            try {
+                String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
+                JSONParser jsonParser = new JSONParser();
+                JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
+
+                for (int i = 0; i < jsonArray.size(); i++) {
+                    JSONObject k = (JSONObject) jsonArray.get(i);
+
+                    SummonerInfo summonerInfo = SummonerInfo.builder()
+                            .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
+                            .summonerName(String.valueOf(k.get("summonerName")))
+                            .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
+                            .losses(Integer.parseInt(String.valueOf(k.get("losses"))))
+                            .tier(String.valueOf(k.get("tier")))
+                            .leagueId(String.valueOf(k.get("leagueId")))
+                            .queueType(String.valueOf(k.get("queueType")))
+                            .rank(String.valueOf(k.get("rank")))
+                            .summonerId(String.valueOf(k.get("summonerId")))
+                            .veteran(Boolean.parseBoolean(String.valueOf(k.get("veteran"))))
+                            .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
+                            .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
+                            .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
+                            .inputName(inputName)
+                            .build();
+
+                    summonerInfoRepository.save(summonerInfo);
+                }
+                return summonerInfoRepository.findByInputName(inputName);
+
+            } catch (Exception e) {
+                System.out.println("e = " + e);
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
+        SummonerAccount summonerAccount = getSummonerAccount(request);
+        String name = summonerAccount.getName();
+        String id = summonerAccount.getId();
+
+        championMasteryRepository.deleteAllBySummonerName(name);
 
         try {
-            String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
+            String body = getStringFromAPI("https://kr.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/" + id + "/top?api_key=" + apiKey);
             JSONParser jsonParser = new JSONParser();
             JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
 
-            SummonerInfo[] summonerInfo = new SummonerInfo[jsonArray.size()];
-            for(int i = 0; i < jsonArray.size(); i++) {
-                JSONObject k = (JSONObject) jsonArray.get(i);
+            for (Object json : jsonArray) {
+                JSONObject k = (JSONObject) json;
+                int championId = Integer.parseInt(String.valueOf(k.get("championId")));
 
-                summonerInfo[i] = SummonerInfo.builder()
-                        .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
-                        .summonerName(String.valueOf(k.get("summonerName")))
-                        .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
-                        .losses(Integer.parseInt(String.valueOf(k.get("losses"))))
-                        .tier(String.valueOf(k.get("tier")))
-                        .leagueId(String.valueOf(k.get("leagueId")))
-                        .queueType(String.valueOf(k.get("queueType")))
-                        .rank(String.valueOf(k.get("rank")))
-                        .summonerId(String.valueOf(k.get("summonerId")))
-                        .veteran(Boolean.parseBoolean(String.valueOf(k.get("veteran"))))
-                        .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
-                        .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
-                        .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
-                        .inputName(inputName)
+                ChampionMastery championMastery = ChampionMastery.builder()
+                        .championId(championId)
+                        .championLevel(Integer.parseInt(String.valueOf(k.get("championLevel"))))
+                        .championPoints(Integer.parseInt(String.valueOf(k.get("championPoints"))))
+                        .championLevel(Integer.parseInt(String.valueOf(k.get("championLevel"))))
+                        .championName(champIdMap.getChampIdMap().get(championId))
+                        .summonerName(name)
                         .build();
-
-                summonerInfoRepository.save(summonerInfo[i]);
+                championMasteryRepository.save(championMastery);
             }
-            return summonerInfoRepository.findByInputName(inputName);
+            return championMasteryRepository.findBySummonerName(name);
 
         }catch (Exception e){
             System.out.println("e = " + e);
             throw new RuntimeException(e);
+        }
+    }
+
+    public List<ChampionMastery> getChampionMastery(HttpServletRequest request){
+        SummonerAccount summonerAccount = getSummonerAccount(request);
+        String name = summonerAccount.getName();
+        String id = summonerAccount.getId();
+
+        List<ChampionMastery> getChampionMastery = championMasteryRepository.findBySummonerName(name);
+        if(!getChampionMastery.isEmpty()){
+            return getChampionMastery;
+        }else{
+            return updateChampionMastery(request);
         }
     }
 
@@ -253,7 +297,6 @@ public class RiotApiService {
 
     public RotationChampions getRotationChampion() {
         try {
-
             ObjectMapper objectMapper = new ObjectMapper();
             String body = getStringFromAPI(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
             RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);

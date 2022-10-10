@@ -1,5 +1,6 @@
 package hello.kms.Controller;
 
+import hello.kms.domain.ChampionMastery;
 import hello.kms.domain.RotationChampions;
 import hello.kms.domain.SummonerAccount;
 import hello.kms.domain.SummonerInfo;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Optional;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -20,8 +21,29 @@ public class RiotApiController {
     @CrossOrigin
     @GetMapping("/search/riot-api/summonerAccount")
     @ResponseBody
-    public SummonerAccount AccountByName(HttpServletRequest request) {
+    public SummonerAccount accountByName(HttpServletRequest request) {
         return riotApiService.getSummonerAccount(request);
+    }
+
+    @CrossOrigin
+    @GetMapping("search/riot-api/summonerInfo")
+    @ResponseBody
+    public List<SummonerInfo> InfoByName(HttpServletRequest request) {
+        return riotApiService.getSummonerInfo(request);
+    }
+
+    @CrossOrigin
+    @GetMapping("/search/riot-api/championMastery")
+    @ResponseBody
+    public List<ChampionMastery> championMastery(HttpServletRequest request) {
+        return riotApiService.getChampionMastery(request);
+    }
+
+    @CrossOrigin
+    @GetMapping("/search/riot-api/updateChampionMastery")
+    @ResponseBody
+    public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
+        return riotApiService.updateChampionMastery(request);
     }
 
     @CrossOrigin
@@ -45,10 +67,4 @@ public class RiotApiController {
         return riotApiService.getRotationChampion();
     }
 
-    @CrossOrigin
-    @GetMapping("search/riot-api/summonerInfo")
-    @ResponseBody
-    public Optional<SummonerInfo> InfoByName(HttpServletRequest request) {
-        return riotApiService.getSummonerInfo(request);
-    }
 }

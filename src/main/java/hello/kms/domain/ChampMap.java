@@ -3,13 +3,13 @@ package hello.kms.domain;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
+import java.util.HashMap;
 import java.util.WeakHashMap;
 
 @Component
 @Getter
 public class ChampMap {
-    private final Map<Integer, String> ChampIdMap = new WeakHashMap<>();
+    private final HashMap<Integer, String> ChampIdMap = new HashMap<>();
 
     public ChampMap() {
         ChampIdMap.put(266, "Aatrox");

@@ -36,33 +36,23 @@ public class RiotApiService {
     private String apiKey;
 
     public SummonerAccount getSummonerAccount(HttpServletRequest request) {
-        String name = request.getParameter("summoner");
-        name = name.replaceAll(" ", "%20");
-
+        String name = request.getParameter("summoner").replace(" ", "");
         Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByName(name);
+
         if (getSummonerAccount.isPresent()) {
             return getSummonerAccount.get();
         } else {
-            CloseableHttpResponse httpResponse = null;
             try {
                 CloseableHttpClient httpClient = HttpClientBuilder.create().build();
                 HttpGet httpGet = new HttpGet(serverUrl + "/lol/summoner/v4/summoners/by-name/" + name + "?api_key=" + apiKey);
-                httpResponse = httpClient.execute(httpGet);
+                CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 
                 if (httpResponse.getStatusLine().getStatusCode() == 404) {
                     throw new SummonerNameNotExist();
                 } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
                     throw new RiotApiException();
                 }
-            } catch (SummonerNameNotExist e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Summoner not found");
-            } catch (RiotApiException e) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "API Key is expired");
-            } catch (Exception e) {
-                throw new RuntimeException("Cannot Get Response from Riot");
-            }
 
-            try {
                 ResponseHandler<String> handler = new BasicResponseHandler();
                 String body = handler.handleResponse(httpResponse);
                 JSONParser jsonParser = new JSONParser();
@@ -77,31 +67,33 @@ public class RiotApiService {
                         .revisionDate(Long.parseLong(String.valueOf(k.get("revisionDate"))))
                         .summonerLevel(Long.parseLong(String.valueOf(k.get("summonerLevel"))))
                         .build();
+
+                httpResponse.close();
+                httpClient.close();
+
                 return summonerAccountRepository.save(summonerAccount);
+
+            } catch (SummonerNameNotExist e) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Summoner not found");
+            } catch (RiotApiException e) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "API Key is expired");
             } catch (Exception e) {
                 System.out.println("e = " + e);
-                throw new RuntimeException("Cannot Read Value from Riot");
+                throw new RuntimeException(e);
             }
         }
     }
 
 
     public SummonerInfo[] getSummonerInfo(HttpServletRequest request) {
-//        String name = request.getParameter("summoner");
-
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String id = summonerAccount.getId();
 
-        CloseableHttpResponse httpResponse = null;
         try {
             CloseableHttpClient httpClient = HttpClientBuilder.create().build();
             HttpGet httpGet = new HttpGet("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
-            httpResponse = httpClient.execute(httpGet);
-        }catch (Exception e){
-            throw new RuntimeException("Cannot Get Response from Riot");
-        }
+            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 
-        try{
             ResponseHandler<String> handler = new BasicResponseHandler();
             String body = handler.handleResponse(httpResponse);
             JSONParser jsonParser = new JSONParser();
@@ -110,30 +102,33 @@ public class RiotApiService {
             SummonerInfo[] summonerInfo = new SummonerInfo[jsonArray.size()];
             for(int i = 0; i < jsonArray.size(); i++) {
                 JSONObject k = (JSONObject) jsonArray.get(i);
-                System.out.println("k = " + k);
+
                 summonerInfo[i] = SummonerInfo.builder()
-                    .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
-                    .summonerName(String.valueOf(k.get("summonerName")))
-                    .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
-                    .losses(Integer.parseInt(String.valueOf(k.get("losses"))))
-                    .tier(String.valueOf(k.get("tier")))
-                    .leagueId(String.valueOf(k.get("leagueId")))
-                    .queueType(String.valueOf(k.get("queueType")))
-                    .rank(String.valueOf(k.get("rank")))
-                    .summonerId(String.valueOf(k.get("summonerId")))
-//                    .veteran(Boolean.parseBoolean(String.valueOf(k.get("veteran"))))
-//                    .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
-//                    .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
-//                    .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
-                    .build();
+                        .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
+                        .summonerName(String.valueOf(k.get("summonerName")))
+                        .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
+                        .losses(Integer.parseInt(String.valueOf(k.get("losses"))))
+                        .tier(String.valueOf(k.get("tier")))
+                        .leagueId(String.valueOf(k.get("leagueId")))
+                        .queueType(String.valueOf(k.get("queueType")))
+                        .rank(String.valueOf(k.get("rank")))
+                        .summonerId(String.valueOf(k.get("summonerId")))
+                        .veteran(Boolean.parseBoolean(String.valueOf(k.get("veteran"))))
+                        .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
+                        .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
+                        .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
+                        .build();
 
                 summonerInfoRepository.save(summonerInfo[i]);
             }
+            httpClient.close();
+            httpResponse.close();
+
             return summonerInfo;
 
         }catch (Exception e){
             System.out.println("e = " + e);
-            throw new RuntimeException("Cannot Read Value from Riot");
+            throw new RuntimeException(e);
         }
     }
 
@@ -242,11 +237,19 @@ public class RiotApiService {
                 }
                 rotationChampions.setFreeChampionNamesForNewPlayers(freeChampForNewPlayersList);
 
+                httpClient.close();
+                httpResponse.close();
                 return rotationChampions;
+            }else{
+                throw new RiotApiException();
             }
-            throw new RuntimeException("Can not get Riot API");
-        }catch (Exception e) {
-            throw new RuntimeException("Cannot Get Response from Riot");
+
+        }catch(RiotApiException e){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Forbidden");
+        }
+        catch (Exception e) {
+            System.out.println("e = " + e);
+            throw new RuntimeException(e);
         }
     }
 }

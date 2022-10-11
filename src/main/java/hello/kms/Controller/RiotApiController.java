@@ -47,7 +47,7 @@ public class RiotApiController {
     }
 
     @CrossOrigin
-    @GetMapping("/search/riot-api/recentGame")
+        @GetMapping("/search/riot-api/recentGame")
     @ResponseBody
     public JSONArray recentGame(HttpServletRequest request) {
         return riotApiService.getRecentGame(request);

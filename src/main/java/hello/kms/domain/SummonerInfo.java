@@ -12,8 +12,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 public class SummonerInfo {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int summoner_info_pk;
+    private int summonerPk;
 
     @Column(name="league_id")
     private String leagueId;
@@ -41,7 +40,4 @@ public class SummonerInfo {
     private boolean freshBlood;
     @Column(name="inactive")
     private boolean inactive;
-
-    @Column(name="input_name")
-    private String inputName;
 }

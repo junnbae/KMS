@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public interface ChampionMasteryRepository extends JpaRepository<ChampionMastery, Long> {
     ChampionMastery save(ChampionMastery championMastery);
-    List<ChampionMastery> findBySummonerName(String name);
+    List<ChampionMastery> findBySummonerPk(int pk);
 
     @Transactional
-    void deleteAllBySummonerName(String name);
+    void deleteAllBySummonerPk(int pk);
 }

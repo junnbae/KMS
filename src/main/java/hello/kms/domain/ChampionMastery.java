@@ -23,6 +23,6 @@ public class ChampionMastery {
     private int championPoints;
     @Column(name="champion_name")
     private String championName;
-    @Column(name="summoner_name")
-    private String summonerName;
+    @Column(name="summoner_pk")
+    private int summonerPk;
 }

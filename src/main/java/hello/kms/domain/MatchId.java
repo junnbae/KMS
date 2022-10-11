@@ -15,8 +15,8 @@ public class MatchId {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int match_id_pk;
 
-    @Column(name="summoner_name")
-    private String summonerName;
+    @Column(name="summoner_pk")
+    private int summonerPk;
 
     @Column(name="match_id")
     private String matchId;

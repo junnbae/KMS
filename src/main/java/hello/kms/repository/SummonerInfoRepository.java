@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface SummonerInfoRepository extends JpaRepository<SummonerInfo, Long> {
     SummonerInfo save(SummonerInfo summonerInfo);
 
-    List<SummonerInfo> findByInputName(String summonerName);
+    List<SummonerInfo> findBySummonerPk(int pk);
 }

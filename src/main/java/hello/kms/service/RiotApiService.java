@@ -104,10 +104,10 @@ public class RiotApiService {
 
     public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
         String id = summonerAccount.getId();
+        int pk = summonerAccount.getSummoner_pk();
 
-        List<SummonerInfo> getSummonerInfo = summonerInfoRepository.findByInputName(inputName);
+        List<SummonerInfo> getSummonerInfo = summonerInfoRepository.findBySummonerPk(pk);
         if(!getSummonerInfo.isEmpty()){
             return getSummonerInfo;
         }
@@ -117,10 +117,11 @@ public class RiotApiService {
                 JSONParser jsonParser = new JSONParser();
                 JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
 
-                for (int i = 0; i < jsonArray.size(); i++) {
-                    JSONObject k = (JSONObject) jsonArray.get(i);
+                for (Object o : jsonArray) {
+                    JSONObject k = (JSONObject) o;
 
                     SummonerInfo summonerInfo = SummonerInfo.builder()
+                            .summonerPk(summonerAccount.getSummoner_pk())
                             .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
                             .summonerName(String.valueOf(k.get("summonerName")))
                             .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
@@ -134,12 +135,11 @@ public class RiotApiService {
                             .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
                             .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
                             .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
-                            .inputName(inputName)
                             .build();
 
                     summonerInfoRepository.save(summonerInfo);
                 }
-                return summonerInfoRepository.findByInputName(inputName);
+                return summonerInfoRepository.findBySummonerPk(pk);
 
             } catch (Exception e) {
                 System.out.println("e = " + e);
@@ -148,12 +148,14 @@ public class RiotApiService {
         }
     }
 
+
+
     public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        String name = summonerAccount.getName();
+        int pk = summonerAccount.getSummoner_pk();
         String id = summonerAccount.getId();
 
-        championMasteryRepository.deleteAllBySummonerName(name);
+        championMasteryRepository.deleteAllBySummonerPk(pk);
 
         try {
             String body = getStringFromAPI("https://kr.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/" + id + "/top?api_key=" + apiKey);
@@ -170,11 +172,11 @@ public class RiotApiService {
                         .championPoints(Integer.parseInt(String.valueOf(k.get("championPoints"))))
                         .championLevel(Integer.parseInt(String.valueOf(k.get("championLevel"))))
                         .championName(champIdMap.getChampIdMap().get(championId))
-                        .summonerName(name)
+                        .summonerPk(pk)
                         .build();
                 championMasteryRepository.save(championMastery);
             }
-            return championMasteryRepository.findBySummonerName(name);
+            return championMasteryRepository.findBySummonerPk(pk);
 
         }catch (Exception e){
             System.out.println("e = " + e);
@@ -184,10 +186,9 @@ public class RiotApiService {
 
     public List<ChampionMastery> getChampionMastery(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        String name = summonerAccount.getName();
-        String id = summonerAccount.getId();
+        int pk = summonerAccount.getSummoner_pk();
 
-        List<ChampionMastery> getChampionMastery = championMasteryRepository.findBySummonerName(name);
+        List<ChampionMastery> getChampionMastery = championMasteryRepository.findBySummonerPk(pk);
         if(!getChampionMastery.isEmpty()){
             return getChampionMastery;
         }else{
@@ -198,12 +199,12 @@ public class RiotApiService {
     public List<MatchId> updateMatchId(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String puuId = summonerAccount.getPuuid();
-        String name = summonerAccount.getName();
+        int pk = summonerAccount.getSummoner_pk();
 
-        matchIdRepository.deleteAllBySummonerName(name);
+        matchIdRepository.deleteAllBySummonerPk(pk);
 
         try {
-            String[] body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=7&api_key=" + apiKey)
+            String[] body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=10&api_key=" + apiKey)
                     .replace("\"","")
                     .replace("[", "")
                     .replace("]", "")
@@ -211,12 +212,12 @@ public class RiotApiService {
 
             for (String s : body) {
                 MatchId matchId = MatchId.builder()
-                        .summonerName(name)
+                        .summonerPk(pk)
                         .matchId(String.valueOf(s))
                         .build();
                 matchIdRepository.save(matchId);
             }
-            return matchIdRepository.findBySummonerName(name);
+            return matchIdRepository.findBySummonerPk(pk);
 
         } catch (Exception e) {
             System.out.println("e = " + e);
@@ -225,8 +226,9 @@ public class RiotApiService {
     }
 
     public List<MatchId> getMatchId(HttpServletRequest request){
-        String name = request.getParameter("summoner").replace(" ", "");
-        List<MatchId> getMatchId = matchIdRepository.findBySummonerName(name);
+        int pk = getSummonerAccount(request).getSummoner_pk();
+        List<MatchId> getMatchId = matchIdRepository.findBySummonerPk(pk);
+
         if(!getMatchId.isEmpty()){
             return getMatchId;
         }

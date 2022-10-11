@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface MatchIdRepository extends JpaRepository<MatchId, Long> {
     MatchId save(MatchId matchId);
-    List<MatchId> findBySummonerName(String name);
+    List<MatchId> findBySummonerPk(int pk);
     @Transactional
-    void deleteAllBySummonerName(String name);
+    void deleteAllBySummonerPk(int pk);
 }

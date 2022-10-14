@@ -6,12 +6,16 @@ import javax.persistence.*;
 
 @Getter
 @Setter
-@Builder
+//@Builder
 @Entity(name="summonerInfo")
 @AllArgsConstructor
 @NoArgsConstructor
 public class SummonerInfo {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int summonerInfoPk;
+
+    @Column(name="summoner_pk")
     private int summonerPk;
 
     @Column(name="league_id")

@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Getter
 @Setter
 @Entity(name="summonerAccount")
-@Builder
+//@Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class SummonerAccount {
@@ -19,6 +19,7 @@ public class SummonerAccount {
 
     @Column
     private String id;
+
     @Column
     private String accountId;
     @Column

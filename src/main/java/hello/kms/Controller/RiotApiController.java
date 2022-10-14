@@ -25,6 +25,13 @@ public class RiotApiController {
         return riotApiService.getSummonerAccount(request);
     }
 
+
+    @CrossOrigin
+    @GetMapping("search/riot-api/updateSummonerInfo")
+    @ResponseBody
+    public List<SummonerInfo> updateSummonerInfo(HttpServletRequest request) {
+        return riotApiService.updateSummonerInfo(request);
+    }
     @CrossOrigin
     @GetMapping("search/riot-api/summonerInfo")
     @ResponseBody

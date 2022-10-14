@@ -75,19 +75,20 @@ public class RiotApiService {
         } else {
             try {
                 String body = getStringFromAPI(serverUrl + "/lol/summoner/v4/summoners/by-name/" + inputName + "?api_key=" + apiKey);
-                JSONParser jsonParser = new JSONParser();
-                JSONObject k = (JSONObject) jsonParser.parse(body);
+                ObjectMapper objectMapper = new ObjectMapper();
+                SummonerAccount summonerAccount = objectMapper.readValue(body, SummonerAccount.class);
+                summonerAccount.setInputName(inputName);
 
-                SummonerAccount summonerAccount = SummonerAccount.builder()
-                        .accountId(String.valueOf(k.get("accountId")))
-                        .puuid(String.valueOf(k.get("puuid")))
-                        .id(String.valueOf(k.get("id")))
-                        .name(String.valueOf(k.get("name")))
-                        .profileIconId(Integer.parseInt(String.valueOf(k.get("profileIconId"))))
-                        .revisionDate(Long.parseLong(String.valueOf(k.get("revisionDate"))))
-                        .summonerLevel(Long.parseLong(String.valueOf(k.get("summonerLevel"))))
-                        .inputName(inputName)
-                        .build();
+//                SummonerAccount summonerAccount = SummonerAccount.builder()
+//                        .accountId(String.valueOf(k.get("accountId")))
+//                        .puuid(String.valueOf(k.get("puuid")))
+//                        .id(String.valueOf(k.get("id")))
+//                        .name(String.valueOf(k.get("name")))
+//                        .profileIconId(Integer.parseInt(String.valueOf(k.get("profileIconId"))))
+//                        .revisionDate(Long.parseLong(String.valueOf(k.get("revisionDate"))))
+//                        .summonerLevel(Long.parseLong(String.valueOf(k.get("summonerLevel"))))
+//                        .inputName(inputName)
+//                        .build();
 
                 return summonerAccountRepository.save(summonerAccount);
 
@@ -102,9 +103,38 @@ public class RiotApiService {
         }
     }
 
-    public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
+    public List<SummonerInfo> updateSummonerInfo(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String id = summonerAccount.getId();
+        int pk = summonerAccount.getSummoner_pk();
+
+        summonerInfoRepository.deleteAllBySummonerPk(pk);
+
+        try {
+            String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
+            JSONParser jsonParser = new JSONParser();
+            JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            SummonerInfo[] summonerInfo = new SummonerInfo[jsonArray.size()];
+
+            for(int i = 0; i < jsonArray.size(); i++){
+                JSONObject json = (JSONObject) jsonArray.get(i);
+                summonerInfo[i] = objectMapper.readValue(json.toString(), SummonerInfo.class);
+                summonerInfo[i].setSummonerPk(pk);
+
+                summonerInfoRepository.save(summonerInfo[i]);
+            }
+            return summonerInfoRepository.findBySummonerPk(pk);
+
+        } catch (Exception e) {
+            System.out.println("e = " + e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
+        SummonerAccount summonerAccount = getSummonerAccount(request);
         int pk = summonerAccount.getSummoner_pk();
 
         List<SummonerInfo> getSummonerInfo = summonerInfoRepository.findBySummonerPk(pk);
@@ -112,43 +142,9 @@ public class RiotApiService {
             return getSummonerInfo;
         }
         else {
-            try {
-                String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
-                JSONParser jsonParser = new JSONParser();
-                JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
-
-                for (Object o : jsonArray) {
-                    JSONObject k = (JSONObject) o;
-
-                    SummonerInfo summonerInfo = SummonerInfo.builder()
-                            .summonerPk(summonerAccount.getSummoner_pk())
-                            .wins(Integer.parseInt(String.valueOf(k.get("wins"))))
-                            .summonerName(String.valueOf(k.get("summonerName")))
-                            .leaguePoints(Integer.parseInt(String.valueOf(k.get("leaguePoints"))))
-                            .losses(Integer.parseInt(String.valueOf(k.get("losses"))))
-                            .tier(String.valueOf(k.get("tier")))
-                            .leagueId(String.valueOf(k.get("leagueId")))
-                            .queueType(String.valueOf(k.get("queueType")))
-                            .rank(String.valueOf(k.get("rank")))
-                            .summonerId(String.valueOf(k.get("summonerId")))
-                            .veteran(Boolean.parseBoolean(String.valueOf(k.get("veteran"))))
-                            .inactive(Boolean.parseBoolean(String.valueOf(k.get("inactive"))))
-                            .hotStreak(Boolean.parseBoolean(String.valueOf(k.get("hotStreak"))))
-                            .freshBlood(Boolean.parseBoolean(String.valueOf(k.get("freshBlood"))))
-                            .build();
-
-                    summonerInfoRepository.save(summonerInfo);
-                }
-                return summonerInfoRepository.findBySummonerPk(pk);
-
-            } catch (Exception e) {
-                System.out.println("e = " + e);
-                throw new RuntimeException(e);
-            }
+            return updateSummonerInfo(request);
         }
     }
-
-
 
     public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);

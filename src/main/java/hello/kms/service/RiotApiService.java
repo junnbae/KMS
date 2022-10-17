@@ -67,7 +67,7 @@ public class RiotApiService {
         }
     }
     public SummonerAccount getSummonerAccount(HttpServletRequest request) {
-        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
+        String inputName = request.getParameter("summoner").replace(" ", "");
         Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByInputName(inputName);
 
         if (getSummonerAccount.isPresent()) {
@@ -78,17 +78,6 @@ public class RiotApiService {
                 ObjectMapper objectMapper = new ObjectMapper();
                 SummonerAccount summonerAccount = objectMapper.readValue(body, SummonerAccount.class);
                 summonerAccount.setInputName(inputName);
-
-//                SummonerAccount summonerAccount = SummonerAccount.builder()
-//                        .accountId(String.valueOf(k.get("accountId")))
-//                        .puuid(String.valueOf(k.get("puuid")))
-//                        .id(String.valueOf(k.get("id")))
-//                        .name(String.valueOf(k.get("name")))
-//                        .profileIconId(Integer.parseInt(String.valueOf(k.get("profileIconId"))))
-//                        .revisionDate(Long.parseLong(String.valueOf(k.get("revisionDate"))))
-//                        .summonerLevel(Long.parseLong(String.valueOf(k.get("summonerLevel"))))
-//                        .inputName(inputName)
-//                        .build();
 
                 return summonerAccountRepository.save(summonerAccount);
 
@@ -108,7 +97,7 @@ public class RiotApiService {
         String id = summonerAccount.getId();
         int pk = summonerAccount.getSummoner_pk();
 
-        summonerInfoRepository.deleteAllBySummonerPk(pk);
+        List<SummonerInfo> summonerInfoList = summonerInfoRepository.findBySummonerPk(pk);
 
         try {
             String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
@@ -121,9 +110,15 @@ public class RiotApiService {
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject json = (JSONObject) jsonArray.get(i);
                 summonerInfo[i] = objectMapper.readValue(json.toString(), SummonerInfo.class);
-                summonerInfo[i].setSummonerPk(pk);
+                summonerInfo[i].setSummonerPk(summonerAccount.getSummoner_pk());
+
+                if(!summonerInfoList.isEmpty()){
+                    summonerInfo[i].setSummonerInfoPk(summonerInfoList.get(i).getSummonerInfoPk());
+                }
 
                 summonerInfoRepository.save(summonerInfo[i]);
+
+//                System.out.println(summonerInfoList.get(i).getSummonerInfoPk() + " " + summonerInfo[i].getSummonerInfoPk());
             }
             return summonerInfoRepository.findBySummonerPk(pk);
 

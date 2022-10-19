@@ -67,7 +67,7 @@ public class RiotApiService {
         }
     }
     public SummonerAccount getSummonerAccount(HttpServletRequest request) {
-        String inputName = request.getParameter("summoner").replace(" ", "");
+        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
         Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByInputName(inputName);
 
         if (getSummonerAccount.isPresent()) {
@@ -132,9 +132,9 @@ public class RiotApiService {
         SummonerAccount summonerAccount = getSummonerAccount(request);
         int pk = summonerAccount.getSummoner_pk();
 
-        List<SummonerInfo> getSummonerInfo = summonerInfoRepository.findBySummonerPk(pk);
-        if(!getSummonerInfo.isEmpty()){
-            return getSummonerInfo;
+        List<SummonerInfo> summonerInfoList = summonerInfoRepository.findBySummonerPk(pk);
+        if(!summonerInfoList.isEmpty()){
+            return summonerInfoList;
         }
         else {
             return updateSummonerInfo(request);
@@ -179,9 +179,9 @@ public class RiotApiService {
         SummonerAccount summonerAccount = getSummonerAccount(request);
         int pk = summonerAccount.getSummoner_pk();
 
-        List<ChampionMastery> getChampionMastery = championMasteryRepository.findBySummonerPk(pk);
-        if(!getChampionMastery.isEmpty()){
-            return getChampionMastery;
+        List<ChampionMastery> championMasteryList = championMasteryRepository.findBySummonerPk(pk);
+        if(!championMasteryList.isEmpty()){
+            return championMasteryList;
         }else{
             return updateChampionMastery(request);
         }

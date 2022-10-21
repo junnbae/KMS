@@ -12,11 +12,11 @@ public class RiotApiConfig {
     private final ChampMap champIdMap;
     private final SummonerAccountRepository summonerAccountRepository;
     private final SummonerInfoRepository summonerInfoRepository;
-    private final MatchIdRepository matchIdRepository;
+//    private final MatchIdRepository matchIdRepository;
     private final RecentGameRepository recentGameRepository;
     private final ChampionMasteryRepository championMasteryRepository;
 
     public RiotApiService riotApiService(){
-        return new RiotApiService(champIdMap, summonerAccountRepository, summonerInfoRepository, matchIdRepository, recentGameRepository, championMasteryRepository);
+        return new RiotApiService(champIdMap, summonerAccountRepository, summonerInfoRepository, recentGameRepository, championMasteryRepository);
     }
 }

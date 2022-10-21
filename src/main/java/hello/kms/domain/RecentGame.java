@@ -31,4 +31,7 @@ public class RecentGame {
     private int death;
     @Column(name="assist")
     private int assist;
+
+    @Column(name="summoner_pk")
+    private int summonerPk;
 }

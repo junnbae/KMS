@@ -13,7 +13,7 @@ import javax.persistence.*;
 public class RecentGame {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int recent_game_pk;
+    private int recentGamePk;
 
     @Column(name="match_id")
     private String matchId;

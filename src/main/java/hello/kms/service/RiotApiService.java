@@ -30,7 +30,6 @@ public class RiotApiService {
     private final ChampMap champIdMap;
     private final SummonerAccountRepository summonerAccountRepository;
     private final SummonerInfoRepository summonerInfoRepository;
-//    private final MatchIdRepository matchIdRepository;
     private final RecentGameRepository recentGameRepository;
     private final ChampionMasteryRepository championMasteryRepository;
 
@@ -95,7 +94,7 @@ public class RiotApiService {
     public List<SummonerInfo> updateSummonerInfo(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String id = summonerAccount.getId();
-        int pk = summonerAccount.getSummoner_pk();
+        int pk = summonerAccount.getSummonerPk();
 
         List<SummonerInfo> summonerInfoList = summonerInfoRepository.findBySummonerPk(pk);
 
@@ -110,15 +109,13 @@ public class RiotApiService {
             for(int i = 0; i < jsonArray.size(); i++){
                 JSONObject json = (JSONObject) jsonArray.get(i);
                 summonerInfo[i] = objectMapper.readValue(json.toString(), SummonerInfo.class);
-                summonerInfo[i].setSummonerPk(summonerAccount.getSummoner_pk());
+                summonerInfo[i].setSummonerPk(summonerAccount.getSummonerPk());
 
                 if(!summonerInfoList.isEmpty()){
                     summonerInfo[i].setSummonerInfoPk(summonerInfoList.get(i).getSummonerInfoPk());
                 }
 
                 summonerInfoRepository.save(summonerInfo[i]);
-
-//                System.out.println(summonerInfoList.get(i).getSummonerInfoPk() + " " + summonerInfo[i].getSummonerInfoPk());
             }
             return summonerInfoRepository.findBySummonerPk(pk);
 
@@ -130,7 +127,7 @@ public class RiotApiService {
 
     public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        int pk = summonerAccount.getSummoner_pk();
+        int pk = summonerAccount.getSummonerPk();
 
         List<SummonerInfo> summonerInfoList = summonerInfoRepository.findBySummonerPk(pk);
         if(!summonerInfoList.isEmpty()){
@@ -143,28 +140,41 @@ public class RiotApiService {
 
     public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        int pk = summonerAccount.getSummoner_pk();
+        int pk = summonerAccount.getSummonerPk();
         String id = summonerAccount.getId();
 
-        championMasteryRepository.deleteAllBySummonerPk(pk);
+        List<ChampionMastery> championMasteryList = championMasteryRepository.findBySummonerPk(pk);
 
         try {
             String body = getStringFromAPI("https://kr.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/" + id + "/top?api_key=" + apiKey);
             JSONParser jsonParser = new JSONParser();
             JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
 
-            for (Object json : jsonArray) {
-                JSONObject k = (JSONObject) json;
-                int championId = Integer.parseInt(String.valueOf(k.get("championId")));
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JSONObject json = (JSONObject) jsonArray.get(i);
+                int championId = Integer.parseInt(String.valueOf(json.get("championId")));
+                ChampionMastery championMastery;
 
-                ChampionMastery championMastery = ChampionMastery.builder()
-                        .championId(championId)
-                        .championLevel(Integer.parseInt(String.valueOf(k.get("championLevel"))))
-                        .championPoints(Integer.parseInt(String.valueOf(k.get("championPoints"))))
-                        .championLevel(Integer.parseInt(String.valueOf(k.get("championLevel"))))
-                        .championName(champIdMap.getChampIdMap().get(championId))
-                        .summonerPk(pk)
-                        .build();
+                if(i < championMasteryList.size()){
+                    championMastery = ChampionMastery.builder()
+                            .championMasteryPk(championMasteryList.get(i).getChampionMasteryPk())
+                            .championId(championId)
+                            .championLevel(Integer.parseInt(String.valueOf(json.get("championLevel"))))
+                            .championPoints(Integer.parseInt(String.valueOf(json.get("championPoints"))))
+                            .championLevel(Integer.parseInt(String.valueOf(json.get("championLevel"))))
+                            .championName(champIdMap.getChampIdMap().get(championId))
+                            .summonerPk(pk)
+                            .build();
+                }else {
+                    championMastery = ChampionMastery.builder()
+                            .championId(championId)
+                            .championLevel(Integer.parseInt(String.valueOf(json.get("championLevel"))))
+                            .championPoints(Integer.parseInt(String.valueOf(json.get("championPoints"))))
+                            .championLevel(Integer.parseInt(String.valueOf(json.get("championLevel"))))
+                            .championName(champIdMap.getChampIdMap().get(championId))
+                            .summonerPk(pk)
+                            .build();
+                }
                 championMasteryRepository.save(championMastery);
             }
             return championMasteryRepository.findBySummonerPk(pk);
@@ -177,7 +187,7 @@ public class RiotApiService {
 
     public List<ChampionMastery> getChampionMastery(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
-        int pk = summonerAccount.getSummoner_pk();
+        int pk = summonerAccount.getSummonerPk();
 
         List<ChampionMastery> championMasteryList = championMasteryRepository.findBySummonerPk(pk);
         if(!championMasteryList.isEmpty()){
@@ -190,26 +200,13 @@ public class RiotApiService {
     public String[] updateMatchId(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String puuId = summonerAccount.getPuuid();
-        int pk = summonerAccount.getSummoner_pk();
-
-//        matchIdRepository.deleteAllBySummonerPk(pk);
 
         try {
-            String[] body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=10&api_key=" + apiKey)
+            return getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=10&api_key=" + apiKey)
                     .replace("\"","")
                     .replace("[", "")
                     .replace("]", "")
                     .split(",");
-
-//            for (String s : body) {
-//                MatchId matchId = MatchId.builder()
-//                        .summonerPk(pk)
-//                        .matchId(String.valueOf(s))
-//                        .build();
-//                matchIdRepository.save(matchId);
-//            }
-//            return matchIdRepository.findBySummonerPk(pk);
-            return body;
 
         } catch (Exception e) {
             System.out.println("e = " + e);
@@ -217,25 +214,12 @@ public class RiotApiService {
         }
     }
 
-//    public List<MatchId> getMatchId(HttpServletRequest request){
-//        int pk = getSummonerAccount(request).getSummoner_pk();
-//        List<MatchId> matchIdList = matchIdRepository.findBySummonerPk(pk);
-//
-//        if(!matchIdList.isEmpty()){
-//            return matchIdList;
-//        }
-//        else {
-//            return updateMatchId(request);
-//        }
-//    }
-
     public List<RecentGame> getGameByMatchId(String name, int summonerPk, String[] matchIdList){
-        List<RecentGame> recentGameList = new ArrayList<RecentGame>();
+        List<RecentGame> recentGameList = new ArrayList<>();
 
         for (String matchId : matchIdList) {
             Optional<RecentGame> getRecentGame = recentGameRepository.findBySummonerPkAndMatchId(summonerPk, matchId);
             if(getRecentGame.isPresent()){
-//                result.add(getRecentGame);
                 recentGameList.add(getRecentGame.get());
             }
             else {
@@ -283,9 +267,7 @@ public class RiotApiService {
     public List<RecentGame> updateRecentGame(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String name = summonerAccount.getName();
-        int pk = summonerAccount.getSummoner_pk();
-
-//        List<MatchId> matchIdList = updateMatchId(request);
+        int pk = summonerAccount.getSummonerPk();
         String[] gameId = updateMatchId(request);
         return getGameByMatchId(name, pk, gameId);
     }
@@ -293,10 +275,7 @@ public class RiotApiService {
     public List<RecentGame> getRecentGame(HttpServletRequest request){
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String name = summonerAccount.getName();
-        int pk = summonerAccount.getSummoner_pk();
-
-//        List<MatchId> matchIdList = getMatchId(request);
-//        return getGameByMatchId(name, pk, matchIdList);
+        int pk = summonerAccount.getSummonerPk();
         List<RecentGame> recentGameList = recentGameRepository.findBySummonerPk(pk);
         if (!recentGameList.isEmpty()){
             return recentGameList;

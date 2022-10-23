@@ -1,6 +1,5 @@
 package hello.kms.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.persistence.*;
@@ -14,7 +13,7 @@ import javax.persistence.*;
 public class ChampionMastery {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int champion_mastery_pk;
+    private int championMasteryPk;
 
 //    @JsonProperty("championId")
     @Column(name="champion_id")

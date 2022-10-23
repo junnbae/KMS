@@ -15,7 +15,7 @@ public class SummonerAccount {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int summoner_pk;
+    private int summonerPk;
 
     @Column
     private String id;

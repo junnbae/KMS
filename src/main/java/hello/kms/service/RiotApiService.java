@@ -149,6 +149,7 @@ public class RiotApiService {
             String body = getStringFromAPI("https://kr.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-summoner/" + id + "/top?api_key=" + apiKey);
             JSONParser jsonParser = new JSONParser();
             JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
+            Set<ChampionMastery> championMasterySet = new HashSet<>();
 
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONObject json = (JSONObject) jsonArray.get(i);
@@ -175,8 +176,9 @@ public class RiotApiService {
                             .summonerPk(pk)
                             .build();
                 }
-                championMasteryRepository.save(championMastery);
+                championMasterySet.add(championMastery);
             }
+            championMasteryRepository.saveAll(championMasterySet);
             return championMasteryRepository.findBySummonerPk(pk);
 
         }catch (Exception e){
@@ -215,14 +217,12 @@ public class RiotApiService {
     }
 
     public List<RecentGame> getGameByMatchId(String name, int summonerPk, String[] matchIdList){
-        List<RecentGame> recentGameList = new ArrayList<>();
+        Set<RecentGame> recentGameSet = new HashSet<>();
 
         for (String matchId : matchIdList) {
             Optional<RecentGame> getRecentGame = recentGameRepository.findBySummonerPkAndMatchId(summonerPk, matchId);
-            if(getRecentGame.isPresent()){
-                recentGameList.add(getRecentGame.get());
-            }
-            else {
+
+            if(getRecentGame.isEmpty()) {
                 try {
                     String body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId + "?api_key=" + apiKey);
                     JSONParser jsonParser = new JSONParser();
@@ -250,8 +250,7 @@ public class RiotApiService {
                                     .summonerPk(summonerPk)
                                     .build();
 
-                            recentGameRepository.save(recentGame);
-                            recentGameList.add(recentGame);
+                            recentGameSet.add(recentGame);
                             break;
                         }
                     }
@@ -261,7 +260,8 @@ public class RiotApiService {
                 }
             }
         }
-        return recentGameList;
+        recentGameRepository.saveAll(recentGameSet);
+        return recentGameRepository.findBySummonerPkOrderByTimeStampDesc(summonerPk);
     }
 
     public List<RecentGame> updateRecentGame(HttpServletRequest request){
@@ -276,7 +276,7 @@ public class RiotApiService {
         SummonerAccount summonerAccount = getSummonerAccount(request);
         String name = summonerAccount.getName();
         int pk = summonerAccount.getSummonerPk();
-        List<RecentGame> recentGameList = recentGameRepository.findBySummonerPk(pk);
+        List<RecentGame> recentGameList = recentGameRepository.findBySummonerPkOrderByTimeStampDesc(pk);
         if (!recentGameList.isEmpty()){
             return recentGameList;
         }

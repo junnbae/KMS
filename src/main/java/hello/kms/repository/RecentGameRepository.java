@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface RecentGameRepository extends JpaRepository<RecentGame, Long> {
     RecentGame save(RecentGame recentGame);
-    List<RecentGame> findBySummonerPk(int pk);
+    List<RecentGame> findBySummonerPkOrderByTimeStampDesc(int pk);
     Optional<RecentGame> findBySummonerPkAndMatchId(int pk, String matchId);
 }

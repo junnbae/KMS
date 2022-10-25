@@ -20,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -65,18 +64,18 @@ public class RiotApiService {
             throw new RuntimeException(e);
         }
     }
-    public SummonerAccount getSummonerAccount(HttpServletRequest request) {
-        String inputName = request.getParameter("summoner").replace(" ", "").toLowerCase();
-        Optional<SummonerAccount> getSummonerAccount = summonerAccountRepository.findByInputName(inputName);
+    public SummonerAccount getSummonerAccount(String summoner) {
+        summoner = summoner.replace(" ", "").toLowerCase();
+        SummonerAccount getSummonerAccount = summonerAccountRepository.findByInputName(summoner);
 
-        if (getSummonerAccount.isPresent()) {
-            return getSummonerAccount.get();
+        if (getSummonerAccount != null) {
+            return getSummonerAccount;
         } else {
             try {
-                String body = getStringFromAPI(serverUrl + "/lol/summoner/v4/summoners/by-name/" + inputName + "?api_key=" + apiKey);
+                String body = getStringFromAPI(serverUrl + "/lol/summoner/v4/summoners/by-name/" + summoner + "?api_key=" + apiKey);
                 ObjectMapper objectMapper = new ObjectMapper();
                 SummonerAccount summonerAccount = objectMapper.readValue(body, SummonerAccount.class);
-                summonerAccount.setInputName(inputName);
+                summonerAccount.setInputName(summoner);
 
                 return summonerAccountRepository.save(summonerAccount);
 
@@ -91,8 +90,8 @@ public class RiotApiService {
         }
     }
 
-    public List<SummonerInfo> updateSummonerInfo(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<SummonerInfo> updateSummonerInfo(String summoner){
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         String id = summonerAccount.getId();
         int pk = summonerAccount.getSummonerPk();
 
@@ -125,8 +124,8 @@ public class RiotApiService {
         }
     }
 
-    public List<SummonerInfo> getSummonerInfo(HttpServletRequest request) {
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<SummonerInfo> getSummonerInfo(String summoner) {
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         int pk = summonerAccount.getSummonerPk();
 
         List<SummonerInfo> summonerInfoList = summonerInfoRepository.findBySummonerPk(pk);
@@ -134,12 +133,12 @@ public class RiotApiService {
             return summonerInfoList;
         }
         else {
-            return updateSummonerInfo(request);
+            return updateSummonerInfo(summoner);
         }
     }
 
-    public List<ChampionMastery> updateChampionMastery(HttpServletRequest request) {
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<ChampionMastery> updateChampionMastery(String summoner) {
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         int pk = summonerAccount.getSummonerPk();
         String id = summonerAccount.getId();
 
@@ -187,20 +186,20 @@ public class RiotApiService {
         }
     }
 
-    public List<ChampionMastery> getChampionMastery(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<ChampionMastery> getChampionMastery(String summoner){
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         int pk = summonerAccount.getSummonerPk();
 
         List<ChampionMastery> championMasteryList = championMasteryRepository.findBySummonerPk(pk);
         if(!championMasteryList.isEmpty()){
             return championMasteryList;
         }else{
-            return updateChampionMastery(request);
+            return updateChampionMastery(summoner);
         }
     }
 
-    public String[] updateMatchId(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public String[] updateMatchId(String summoner){
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         String puuId = summonerAccount.getPuuid();
 
         try {
@@ -220,9 +219,9 @@ public class RiotApiService {
         Set<RecentGame> recentGameSet = new HashSet<>();
 
         for (String matchId : matchIdList) {
-            Optional<RecentGame> getRecentGame = recentGameRepository.findBySummonerPkAndMatchId(summonerPk, matchId);
+            RecentGame getRecentGame = recentGameRepository.findBySummonerPkAndMatchId(summonerPk, matchId);
 
-            if(getRecentGame.isEmpty()) {
+            if(getRecentGame == null) {
                 try {
                     String body = getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/" + matchId + "?api_key=" + apiKey);
                     JSONParser jsonParser = new JSONParser();
@@ -264,16 +263,16 @@ public class RiotApiService {
         return recentGameRepository.findBySummonerPkOrderByTimeStampDesc(summonerPk);
     }
 
-    public List<RecentGame> updateRecentGame(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<RecentGame> updateRecentGame(String summoner){
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         String name = summonerAccount.getName();
         int pk = summonerAccount.getSummonerPk();
-        String[] gameId = updateMatchId(request);
+        String[] gameId = updateMatchId(summoner);
         return getGameByMatchId(name, pk, gameId);
     }
 
-    public List<RecentGame> getRecentGame(HttpServletRequest request){
-        SummonerAccount summonerAccount = getSummonerAccount(request);
+    public List<RecentGame> getRecentGame(String summoner){
+        SummonerAccount summonerAccount = getSummonerAccount(summoner);
         String name = summonerAccount.getName();
         int pk = summonerAccount.getSummonerPk();
         List<RecentGame> recentGameList = recentGameRepository.findBySummonerPkOrderByTimeStampDesc(pk);
@@ -281,7 +280,7 @@ public class RiotApiService {
             return recentGameList;
         }
         else{
-            String[] gameId = updateMatchId(request);
+            String[] gameId = updateMatchId(summoner);
             return getGameByMatchId(name, pk, gameId);
         }
 

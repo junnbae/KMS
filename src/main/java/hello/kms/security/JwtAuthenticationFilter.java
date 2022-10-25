@@ -24,18 +24,9 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException{
         String accessToken = jwtTokenProvider.resolveToken((HttpServletRequest) request, "X-AUTH-ACCESS-TOKEN");
-        String refreshToken = jwtTokenProvider.resolveToken((HttpServletRequest) request, "X-AUTH-REFRESH-TOKEN");
 
         try{
-            if(refreshToken != null && jwtTokenProvider.validateToken(refreshToken)) {
-                User user = jwtTokenProvider.findUser(refreshToken);
-                if(!user.getRefreshToken().equals(refreshToken)){
-                    throw new RemoteException("The refresh token is corrupted.");
-                }
-
-                if (accessToken == null || !jwtTokenProvider.validateToken(accessToken)) {
-                    accessToken = jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles(), (HttpServletResponse) response);
-                }
+            if(accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

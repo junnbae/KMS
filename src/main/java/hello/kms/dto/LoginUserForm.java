@@ -1,12 +1,11 @@
-package hello.kms.Controller.form;
+package hello.kms.dto;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class RegisterUserForm {
+public class LoginUserForm {
     private String userId;
     private String password;
-    private String userName;
 }

@@ -13,7 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @Service
-public class CrawService {
+public class CrawlingService {
     public List<MostChamp> getMostChamp(HttpServletRequest request) {
         String summoner = request.getParameter("summoner").replaceAll(" ", "");
         String url = "https://www.op.gg/summoners/kr/" + summoner;

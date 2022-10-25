@@ -30,18 +30,9 @@ public class User implements UserDetails {
     private String password;
     @Column(length = 10)
     private String userName;
-    @Column(length = 200)
-    private String refreshToken;
 
     @ElementCollection(fetch = FetchType.EAGER)
     private List<String> roles = new ArrayList<>();
-
-//    @Builder
-//    public User(String userId, String password, String userName) {
-//        this.userId = userId;
-//        this.password = password;
-//        this.userName = userName;
-//    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

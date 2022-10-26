@@ -52,13 +52,6 @@ public class UserService {
         if(findUser.isPresent()){
             User user = findUser.get();
             if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
-                userRepository.save(User.builder()
-                    .userPk(user.getUserPk())
-                    .userId(user.getUserId())
-                    .password(user.getPassword())
-                    .userName(user.getUsername())
-                    .roles(user.getRoles())
-                    .build());
                 return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
             }else{
                 throw new RuntimeException("The password is not match");

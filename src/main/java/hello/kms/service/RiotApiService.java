@@ -32,6 +32,8 @@ public class RiotApiService {
     private final RecentGameRepository recentGameRepository;
     private final ChampionMasteryRepository championMasteryRepository;
 
+    private final ObjectMapper objectMapper;
+
     String serverUrl = "https://kr.api.riotgames.com";
     @Value("${riot_api_key}")
     private String apiKey;
@@ -73,7 +75,6 @@ public class RiotApiService {
         } else {
             try {
                 String body = getStringFromAPI(serverUrl + "/lol/summoner/v4/summoners/by-name/" + summoner + "?api_key=" + apiKey);
-                ObjectMapper objectMapper = new ObjectMapper();
                 SummonerAccount summonerAccount = objectMapper.readValue(body, SummonerAccount.class);
                 summonerAccount.setInputName(summoner);
 
@@ -101,7 +102,6 @@ public class RiotApiService {
             String body = getStringFromAPI("https://kr.api.riotgames.com/lol/league/v4/entries/by-summoner/" + id + "?api_key=" + apiKey);
             JSONParser jsonParser = new JSONParser();
             JSONArray jsonArray = (JSONArray) jsonParser.parse(body);
-            ObjectMapper objectMapper = new ObjectMapper();
 
             SummonerInfo[] summonerInfo = new SummonerInfo[jsonArray.size()];
 
@@ -288,7 +288,6 @@ public class RiotApiService {
 
     public RotationChampions getRotationChampion() {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             String body = getStringFromAPI(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
             RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);
 

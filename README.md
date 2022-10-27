@@ -13,10 +13,9 @@ MariaDB v10.9.3
 
 
 ## 화면 구성
-
-![kms1](https://user-images.githubusercontent.com/75034782/198262651-021f2c6c-305f-4fa0-baf3-578f44c55754.png)
+![kms1](https://user-images.githubusercontent.com/75034782/198267024-0ac9fa13-b446-415d-a0e0-dce098273462.png)
 화면과 같이 사용자의 프로필, 레벨, 랭크, 가장 많이 한 챔피언, 최근 전적을 조회 할 수 있다.
 
 
-![kms2](https://user-images.githubusercontent.com/75034782/198266364-c458a022-2f55-4bab-ab24-b0731c9cb539.png)</br>
+![kms2](https://user-images.githubusercontent.com/75034782/198267091-c163a128-e7cf-4e05-9161-8911ce36254b.png)
 또한 라이엇 API를 통해 얻어온 최고 숙련도를 가진 챔피언 3개를 조회할 수 있다.

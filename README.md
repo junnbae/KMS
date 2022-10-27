@@ -5,3 +5,8 @@
 현재 로테이션 챔피언과 사용자의 최근 전적 및 사용 챔피언의 숙련도를 알 수 있다.  
 (https://kwak.gq)
 ![image](https://user-images.githubusercontent.com/75034782/195867033-39dc5e4f-f0ca-4011-a82e-8960f5a99cbe.png)
+
+
+## 개발 기술
+Spring boot v2.7.2
+MariaDB v10.9.3

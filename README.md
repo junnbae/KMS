@@ -8,7 +8,7 @@
 
 
 ## 개발 기술
-Spring boot v2.7.2
+Spring boot v2.7.2</br>
 MariaDB v10.9.3
 
 

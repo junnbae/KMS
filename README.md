@@ -11,6 +11,9 @@
 Spring boot v2.7.2
 MariaDB v10.9.3
 
+
+## 화면 구성
+
 ![kms1](https://user-images.githubusercontent.com/75034782/198262651-021f2c6c-305f-4fa0-baf3-578f44c55754.png)
 화면과 같이 사용자의 프로필, 레벨, 랭크, 가장 많이 한 챔피언, 최근 전적을 조회 할 수 있다.
 

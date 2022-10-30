@@ -65,15 +65,8 @@ public class JwtTokenProvider {
         }
     }
 
-    public String resolveToken(HttpServletRequest request, String tokenName){
-        if(request.getCookies() != null) {
-            Cookie[] cookies = request.getCookies();
-            for (Cookie cookie : cookies) {
-                if (tokenName.equals(cookie.getName()))
-                    return cookie.getValue();
-            }
-        }
-        return null;
+    public String resolveToken(HttpServletRequest request){
+        return request.getHeader("AccessToken");
     }
 
     public boolean validateToken(String jwtToken){

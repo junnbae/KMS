@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Transactional
@@ -58,5 +59,9 @@ public class UserService {
             }
         }
         throw new RuntimeException("The ID is not exist.");
+    }
+
+    public List<User> adminUser(){
+        return userRepository.findAllByRoles("ROLE_USER");
     }
 }

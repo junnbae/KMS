@@ -31,6 +31,7 @@ public class RiotApiService {
     private final SummonerInfoRepository summonerInfoRepository;
     private final RecentGameRepository recentGameRepository;
     private final ChampionMasteryRepository championMasteryRepository;
+    private final FreeChampionsRepository freeChampionsRepository;
 
     private final ObjectMapper objectMapper;
 
@@ -286,28 +287,36 @@ public class RiotApiService {
 
     }
 
-    public RotationChampions getRotationChampion() {
-        try {
-            String body = getStringFromAPI(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
-            RotationChampions rotationChampions = objectMapper.readValue(body, RotationChampions.class);
+    public List<String> getRotationChampion() {
+        if(freeChampionsRepository.findAll().isEmpty()) {
+            try {
+                String body = getStringFromAPI(serverUrl + "/lol/platform/v3/champion-rotations" + "?api_key=" + apiKey);
+                JSONParser jsonParser = new JSONParser();
+                JSONObject jsonObject = (JSONObject) jsonParser.parse(body);
+                JSONArray freeChampionIds = (JSONArray) jsonObject.get("freeChampionIds");
 
-            List<String> freeChampList = new ArrayList<>();
-            for (Integer freeChampionId : rotationChampions.getFreeChampionIds()) {
-                freeChampList.add(champIdMap.getChampIdMap().get(freeChampionId));
+                Set<FreeChampions> freeChampionsSet = new HashSet<>();
+
+                for (Object freeChampionId : freeChampionIds) {
+                    int cid = Integer.parseInt(String.valueOf(freeChampionId));
+                    FreeChampions freeChampion = FreeChampions.builder()
+                            .championId(cid)
+                            .championName(champIdMap.getChampIdMap().get(cid))
+                            .build();
+                    freeChampionsSet.add(freeChampion);
+                }
+                freeChampionsRepository.saveAll(freeChampionsSet);
+            } catch (Exception e) {
+                System.out.println("e = " + e);
+                throw new RuntimeException(e);
             }
-            rotationChampions.setFreeChampionNames(freeChampList);
-
-            List<String> freeChampForNewPlayersList = new ArrayList<>();
-            for (Integer freeChampionIdForNewPlayer : rotationChampions.getFreeChampionIdsForNewPlayers()) {
-                freeChampForNewPlayersList.add(champIdMap.getChampIdMap().get(freeChampionIdForNewPlayer));
-            }
-            rotationChampions.setFreeChampionNamesForNewPlayers(freeChampForNewPlayersList);
-
-            return rotationChampions;
         }
-        catch (Exception e) {
-            System.out.println("e = " + e);
-            throw new RuntimeException(e);
+
+        List<String> championName = new ArrayList<>();
+        List<FreeChampions> freeChampions = freeChampionsRepository.findAll();
+        for(FreeChampions freeChampion : freeChampions){
+            championName.add(freeChampion.getChampionName());
         }
+        return championName;
     }
 }

@@ -62,7 +62,7 @@ public class RiotApiController {
 
     @GetMapping("/rotation")
     @ResponseBody
-    public RotationChampions rotationChampion() {
+    public List<String> rotationChampion() {
         return riotApiService.getRotationChampion();
     }
 

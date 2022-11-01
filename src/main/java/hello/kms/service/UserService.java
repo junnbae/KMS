@@ -50,15 +50,26 @@ public class UserService {
 
     public String login(LoginUserForm form){
         Optional<User> findUser = userRepository.findByUserId(form.getUserId());
-        if(findUser.isPresent()){
-            User user = findUser.get();
-            if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
-                return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
-            }else{
-                throw new RuntimeException("The password is not match");
-            }
+        User user = findUser.orElseThrow(()->
+            new RuntimeException("The ID is not exist.")
+        );
+
+        if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
+            return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
         }
-        throw new RuntimeException("The ID is not exist.");
+
+        throw new RuntimeException("The password is not match");
+
+//        Optional<User> findUser = userRepository.findByUserId(form.getUserId());
+//        if(findUser.isPresent()){
+//            User user = findUser.get();
+//            if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
+//                return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
+//            }else{
+//                throw new RuntimeException("The password is not match");
+//            }
+//        }
+//        throw new RuntimeException("The ID is not exist.");
     }
 
     public List<User> adminUser(){

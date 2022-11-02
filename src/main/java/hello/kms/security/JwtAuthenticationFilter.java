@@ -1,5 +1,7 @@
 package hello.kms.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,7 +30,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }catch(Exception e){
-            throw new RuntimeException("Refresh Token has expired");
+            throw new RuntimeException("Jwt is Expired");
         }
 
         chain.doFilter(request, response);

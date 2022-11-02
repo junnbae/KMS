@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface SummonerInfoRepository extends JpaRepository<SummonerInfo, Long> {
 
-    List<SummonerInfo> findBySummonerPk(int pk);
+    List<SummonerInfo> findBySummonerPkOrderByQueueTypeDesc(int pk);
 }

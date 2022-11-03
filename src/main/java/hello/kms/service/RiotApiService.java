@@ -1,11 +1,14 @@
 package hello.kms.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
 import hello.kms.exception.RiotApiException;
-import hello.kms.exception.SummonerNameNotExist;
+import hello.kms.exception.SummonerNameNotExistException;
 import hello.kms.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -15,15 +18,18 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class RiotApiService {
     private final ChampMap champIdMap;
@@ -46,9 +52,11 @@ public class RiotApiService {
             CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 
             if (httpResponse.getStatusLine().getStatusCode() == 404) {
-                throw new SummonerNameNotExist();
+                log.info("Summoner not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
             } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
-                throw new RiotApiException();
+                log.info("API Key is expired");
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
             }
 
             ResponseHandler<String> handler = new BasicResponseHandler();
@@ -58,12 +66,8 @@ public class RiotApiService {
             httpResponse.close();
             return body;
 
-        }catch (SummonerNameNotExist e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Summoner not found");
-        } catch (RiotApiException e) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "API Key is expired");
-        } catch (Exception e) {
-            System.out.println("e = " + e);
+        } catch (IOException e) {
+            System.err.println("e = " + e);
             throw new RuntimeException(e);
         }
     }
@@ -78,15 +82,10 @@ public class RiotApiService {
 
                 return summonerAccountRepository.save(accountAPI);
 
-            } catch (SummonerNameNotExist e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Summoner not found");
-            } catch (RiotApiException e) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "API Key is expired");
-            } catch (Exception e) {
-                System.out.println("e = " + e);
+            } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
-            }}
-        );
+            }
+        });
     }
 
     public List<SummonerInfo> updateSummonerInfo(String summoner){
@@ -116,8 +115,7 @@ public class RiotApiService {
             }
             return summonerInfoRepository.findBySummonerPkOrderByQueueTypeDesc(pk);
 
-        } catch (Exception e) {
-            System.out.println("e = " + e);
+        } catch (IOException | ParseException e) {
             throw new RuntimeException(e);
         }
     }
@@ -178,8 +176,7 @@ public class RiotApiService {
             championMasteryRepository.saveAll(championMasterySet);
             return championMasteryRepository.findBySummonerPk(pk);
 
-        }catch (Exception e){
-            System.out.println("e = " + e);
+        } catch (ParseException e) {
             throw new RuntimeException(e);
         }
     }
@@ -200,17 +197,11 @@ public class RiotApiService {
         SummonerAccount summonerAccount = getSummonerAccount(summoner);
         String puuId = summonerAccount.getPuuid();
 
-        try {
-            return getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=10&api_key=" + apiKey)
-                    .replace("\"","")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(",");
-
-        } catch (Exception e) {
-            System.out.println("e = " + e);
-            throw new RuntimeException(e);
-        }
+        return getStringFromAPI("https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/" + puuId + "/ids?start=0&count=10&api_key=" + apiKey)
+                .replace("\"","")
+                .replace("[", "")
+                .replace("]", "")
+                .split(",");
     }
 
     public List<RecentGame> getGameByMatchId(String name, int summonerPk, String[] matchIdList){
@@ -253,8 +244,7 @@ public class RiotApiService {
                     }
                     return recentGame;
 
-                } catch (Exception e) {
-                    System.out.println("e = " + e);
+                } catch (ParseException e) {
                     throw new RuntimeException(e);
                 }
             });
@@ -305,8 +295,7 @@ public class RiotApiService {
                     freeChampionsSet.add(freeChampion);
                 }
                 freeChampionsRepository.saveAll(freeChampionsSet);
-            } catch (Exception e) {
-                System.out.println("e = " + e);
+            } catch (ParseException e) {
                 throw new RuntimeException(e);
             }
         }

@@ -25,6 +25,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 	implementation 'org.jsoup:jsoup:1.15.3'
+
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+	annotationProcessor 'org.projectlombok:lombok:1.18.24'
+	implementation 'org.projectlombok:lombok:1.18.24'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'mysql:mysql-connector-java'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -32,7 +37,7 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 
 	implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
-	implementation 'org.springframework.boot:spring-boot-gradle-plugin:2.7.4'
+	implementation 'org.springframework.boot:spring-boot-gradle-plugin:2.7.5'
 }
 
 tasks.named('test') {

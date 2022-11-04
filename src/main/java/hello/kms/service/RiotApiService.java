@@ -1,7 +1,6 @@
 package hello.kms.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
 import hello.kms.exception.RiotApiException;
@@ -20,9 +19,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -52,11 +49,9 @@ public class RiotApiService {
             CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
 
             if (httpResponse.getStatusLine().getStatusCode() == 404) {
-                log.info("Summoner not found");
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+                throw new SummonerNameNotExistException();
             } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
-                log.info("API Key is expired");
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+                throw new RiotApiException();
             }
 
             ResponseHandler<String> handler = new BasicResponseHandler();

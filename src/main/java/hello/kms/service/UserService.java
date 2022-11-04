@@ -3,6 +3,9 @@ package hello.kms.service;
 import hello.kms.dto.LoginUserForm;
 import hello.kms.dto.RegisterUserForm;
 import hello.kms.domain.User;
+import hello.kms.exception.IDExistException;
+import hello.kms.exception.PasswordWrongException;
+import hello.kms.exception.UserNotExistException;
 import hello.kms.repository.UserRepository;
 import hello.kms.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -44,21 +47,19 @@ public class UserService {
     private void validateDuplicateMember(String memberId){
         userRepository.findByUserId(memberId)
                 .ifPresent(m -> {
-                    throw new RuntimeException("The ID that already exists.");
+                    throw new IDExistException();
                 });
     }
 
     public String login(LoginUserForm form){
         Optional<User> findUser = userRepository.findByUserId(form.getUserId());
-        User user = findUser.orElseThrow(()->
-            new RuntimeException("The ID is not exist.")
-        );
+        User user = findUser.orElseThrow(UserNotExistException::new);
 
         if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
             return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
         }
 
-        throw new RuntimeException("The password is not match");
+        throw new PasswordWrongException();
     }
 
     public List<User> adminUser(){

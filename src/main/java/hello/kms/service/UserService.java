@@ -27,7 +27,9 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
 
     public HashMap<String, Boolean> register(RegisterUserForm form) {
-        validateDuplicateMember(form.getUserId());
+        if(!validateDuplicateId(form.getUserId()).get("validate")){
+            throw new IDExistException();
+        }
         form.setPassword(bCryptPasswordEncoder.encode(form.getPassword()));
 
         User user = User.builder()
@@ -44,16 +46,24 @@ public class UserService {
         return map;
     }
 
-    private void validateDuplicateMember(String memberId){
-        userRepository.findByUserId(memberId)
-                .ifPresent(m -> {
-                    throw new IDExistException();
-                });
+    public HashMap<String, Boolean> validateDuplicateId(String memberId){
+        HashMap<String, Boolean> map = new HashMap<>();
+
+        if(userRepository.findByUserId(memberId).isPresent()){
+            map.put("validate", false);
+        }else {
+            map.put("validate", true);
+        }
+        return map;
+
+//        userRepository.findByUserId(memberId)
+//                .ifPresent(m -> {
+//                    throw new IDExistException();
+//                });
     }
 
     public String login(LoginUserForm form){
-        Optional<User> findUser = userRepository.findByUserId(form.getUserId());
-        User user = findUser.orElseThrow(UserNotExistException::new);
+        User user = userRepository.findByUserId(form.getUserId()).orElseThrow(UserNotExistException::new);
 
         if(bCryptPasswordEncoder.matches(form.getPassword(), user.getPassword())){
             return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());

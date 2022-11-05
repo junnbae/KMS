@@ -7,10 +7,7 @@ import hello.kms.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
@@ -20,6 +17,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
     private final UserService userService;
+
+    @PostMapping("/checkId")
+    @ResponseBody
+    public HashMap<String, Boolean> checkId(@RequestParam String id){
+        return userService.validateDuplicateId(id);
+    }
 
     @PostMapping("/signUp")
     @ResponseBody

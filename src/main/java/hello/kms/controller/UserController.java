@@ -5,7 +5,6 @@ import hello.kms.dto.LoginUserForm;
 import hello.kms.dto.RegisterUserForm;
 import hello.kms.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.json.simple.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 

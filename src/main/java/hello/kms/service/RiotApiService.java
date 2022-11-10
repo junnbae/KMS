@@ -7,7 +7,6 @@ import hello.kms.exception.RiotApiException;
 import hello.kms.exception.SummonerNameNotExistException;
 import hello.kms.repository.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -26,7 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class RiotApiService {
     private final ChampMap champIdMap;

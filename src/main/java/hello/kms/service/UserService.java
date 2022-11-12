@@ -71,6 +71,10 @@ public class UserService {
         throw new PasswordWrongException();
     }
 
+    public String kakaoLogin(){
+        return null;
+    }
+
     public List<User> adminUser(){
         return userRepository.findAllByRoles("ROLE_USER");
     }

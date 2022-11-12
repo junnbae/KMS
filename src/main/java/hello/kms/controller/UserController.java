@@ -29,11 +29,17 @@ public class UserController {
         return userService.register(form);
     }
 
-    @PostMapping("/signIn")
+    @PostMapping("/login")
     @ResponseBody
     public String signIn(@RequestBody LoginUserForm form, HttpServletResponse response){
         return userService.login(form);
     }
+
+//    @PostMapping("/login/oauth2/code/kakao")
+//    @ResponseBody
+//    public String kakaoLogin(){
+//        return userService.kakaoLogin();
+//    }
 
     @GetMapping("/admin/adminUser")
     @ResponseBody

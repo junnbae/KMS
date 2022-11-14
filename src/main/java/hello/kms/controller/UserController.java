@@ -35,11 +35,11 @@ public class UserController {
         return userService.login(form);
     }
 
-//    @PostMapping("/login/oauth2/code/kakao")
-//    @ResponseBody
-//    public String kakaoLogin(){
-//        return userService.kakaoLogin();
-//    }
+    @GetMapping("/login/oauth2/code/kakao")
+    @ResponseBody
+    public String kakaoLogin(@RequestParam String code){
+        return userService.kakaoLogin(code);
+    }
 
     @GetMapping("/admin/adminUser")
     @ResponseBody

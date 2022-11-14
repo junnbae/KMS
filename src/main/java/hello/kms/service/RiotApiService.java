@@ -3,16 +3,8 @@ package hello.kms.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.kms.domain.*;
-import hello.kms.exception.RiotApiException;
-import hello.kms.exception.SummonerNameNotExistException;
 import hello.kms.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -23,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static hello.kms.service.GetApiByUrl.getStringFromAPI;
 
 @Service
 @RequiredArgsConstructor
@@ -40,30 +34,6 @@ public class RiotApiService {
     @Value("${riot_api_key}")
     private String apiKey;
 
-    public String getStringFromAPI(String url){
-        try{
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build();
-            HttpGet httpGet = new HttpGet(url);
-            CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
-
-            if (httpResponse.getStatusLine().getStatusCode() == 404) {
-                throw new SummonerNameNotExistException();
-            } else if (httpResponse.getStatusLine().getStatusCode() == 403) {
-                throw new RiotApiException();
-            }
-
-            ResponseHandler<String> handler = new BasicResponseHandler();
-
-            String body = handler.handleResponse(httpResponse);
-            httpClient.close();
-            httpResponse.close();
-            return body;
-
-        } catch (IOException e) {
-            System.err.println("e = " + e);
-            throw new RuntimeException(e);
-        }
-    }
     public SummonerAccount getSummonerAccount(String summoner) {
         String summonerName = summoner.replace(" ", "").toLowerCase();
 

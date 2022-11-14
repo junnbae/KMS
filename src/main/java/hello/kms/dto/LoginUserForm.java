@@ -1,5 +1,6 @@
 package hello.kms.dto;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 

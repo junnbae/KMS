@@ -2,6 +2,7 @@ package hello.kms.controller;
 
 import hello.kms.exception.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpResponseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -27,5 +28,11 @@ public class ExceptionController {
     public ResponseEntity<String> forbidden(Exception e){
         log.info("{}", e.getClass());
         return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(HttpResponseException.class)
+    public ResponseEntity<String> kakaoCodeException(HttpResponseException e){
+        log.warn("{}", e.getClass());
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

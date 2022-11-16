@@ -36,7 +36,7 @@ public class UserService {
     private String kakaoTokenHostUrl;
     @Value("${spring.security.oauth2.client.provider.kakao.user-info-url}")
     private String kakaoUserInfoUrl;
-    @Value("${spring.security.oauth2.client.provider.kakao.authorization-grant-type}")
+    @Value("${spring.security.oauth2.client.registration.kakao.authorization-grant-type}")
     private String kakaoAuthorizationType;
 
     @Value("${spring.security.oauth2.client.registration.naver.client-id}")
@@ -47,8 +47,10 @@ public class UserService {
     private String naverClientSecret;
     @Value("${spring.security.oauth2.client.provider.naver.token-url}")
     private String naverTokenHostUrl;
-    @Value("${spring.security.oauth2.client.provider.kakao.authorization-grant-type}")
+    @Value("${spring.security.oauth2.client.registration.naver.authorization-grant-type}")
     private String naverAuthorizationType;
+    @Value("${spring.security.oauth2.client.provider.naver.user-info-url}")
+    private String naverUserInfoUrl;
 
 //    public HashMap<String, Boolean> register(RegisterUserForm form) {
 //        if(!validateDuplicateId(form.getUserId()).get("validate")){
@@ -91,7 +93,7 @@ public class UserService {
 //        throw new PasswordWrongException();
 //    }
 
-    public String getAccessToken(String code, String tokenUrl){
+    public String getAccessToken(String tokenUrl){
         try {
             String body = getStringFromAPI(tokenUrl);
             JSONParser jsonParser = new JSONParser();
@@ -103,14 +105,14 @@ public class UserService {
         }
     }
 
-    public JSONObject kakaoUserId(String accessToken){
+    public JSONObject getUserInfo(String accessToken, String url){
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Bearer " + accessToken);
 
         HttpEntity<String> request = new HttpEntity<>(null, headers);
         RestTemplate restTemplate = new RestTemplate();
         String res = restTemplate.postForObject(
-                kakaoUserInfoUrl,
+                url,
                 request,
                 String.class
         );
@@ -129,9 +131,9 @@ public class UserService {
                 + "&client_id=" + kakaoClientId
                 + "&redirect_url=" + kakaoRedirectUrl
                 + "&code=" + code;
-        String accessToken = getAccessToken(code, tokenUrl);
+        String accessToken = getAccessToken(tokenUrl);
 
-        JSONObject userInfo = kakaoUserId(accessToken);
+        JSONObject userInfo = getUserInfo(accessToken, kakaoUserInfoUrl);
         String userId = String.valueOf(userInfo.get("id"));
 
         User user = userRepository.findByUserId(userId).orElseGet(() ->{
@@ -150,13 +152,16 @@ public class UserService {
     }
 
     public String naverLogin(String code){
-        String tokenUrl = naverTokenHostUrl
+        String authorizationUrl = naverTokenHostUrl
                 + "?grant_type=" + naverAuthorizationType
                 + "&client_id=" + naverClientId
-                + "&redirect_url=" + naverRedirectUrl
-                + "&code=" + code;
-        String accessToken = getAccessToken(code, tokenUrl);
-        return code;
+                + "&client_secret=" + naverClientSecret
+                + "&code=" + code
+                + "&state=";
+
+        String accessToken = getAccessToken(authorizationUrl);
+        JSONObject userInfo = getUserInfo(accessToken, naverUserInfoUrl);
+        return userInfo+"";
     }
 
     public List<User> adminUser(){

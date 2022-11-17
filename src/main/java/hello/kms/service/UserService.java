@@ -147,6 +147,7 @@ public class UserService {
                     .roles(Collections.singletonList("ROLE_USER"))
                     .build();
         });
+        userRepository.save(user);
 
         return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
     }
@@ -160,8 +161,22 @@ public class UserService {
                 + "&state=";
 
         String accessToken = getAccessToken(authorizationUrl);
-        JSONObject userInfo = getUserInfo(accessToken, naverUserInfoUrl);
-        return userInfo+"";
+        JSONObject userInfo = (JSONObject) getUserInfo(accessToken, naverUserInfoUrl).get("response");
+        String userId = String.valueOf(userInfo.get("id"));
+
+        User user = userRepository.findByUserId(userId).orElseGet(() -> {
+            String nickname = String.valueOf(userInfo.get("name"));
+
+            return User.builder()
+                    .userId(userId)
+                    .password("")
+                    .userName(nickname)
+                    .roles(Collections.singletonList("ROLE_USER"))
+                    .build();
+        });
+
+        userRepository.save(user);
+        return jwtTokenProvider.createAccessToken(user.getUserId(), user.getRoles());
     }
 
     public List<User> adminUser(){

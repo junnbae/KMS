@@ -126,12 +126,13 @@ public class UserService {
     }
 
     public String kakaoLogin(String code){
-        String tokenUrl = kakaoTokenHostUrl
+        String authorizationUrl = kakaoTokenHostUrl
                 + "?grant_type=" + kakaoAuthorizationType
                 + "&client_id=" + kakaoClientId
                 + "&redirect_url=" + kakaoRedirectUrl
                 + "&code=" + code;
-        String accessToken = getAccessToken(tokenUrl);
+        String accessToken = getAccessToken(authorizationUrl);
+        System.out.println("accessToken = " + accessToken);
 
         JSONObject userInfo = getUserInfo(accessToken, kakaoUserInfoUrl);
         String userId = String.valueOf(userInfo.get("id"));
@@ -159,8 +160,8 @@ public class UserService {
                 + "&client_secret=" + naverClientSecret
                 + "&code=" + code
                 + "&state=";
-
         String accessToken = getAccessToken(authorizationUrl);
+
         JSONObject userInfo = (JSONObject) getUserInfo(accessToken, naverUserInfoUrl).get("response");
         String userId = String.valueOf(userInfo.get("id"));
 

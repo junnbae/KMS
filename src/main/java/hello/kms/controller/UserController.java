@@ -35,15 +35,14 @@ public class UserController {
     @ResponseBody
     public String kakaoLogin(@RequestParam String code) {
         return userService.kakaoLogin(code);
-        //https://kauth.kakao.com/oauth/authorize?client_id=43e398315e08268714887b3750a55107&redirect_uri=http://localhost:8080/login/oauth2/code/kakao&response_type=code
-//        https://accounts.kakao.com/login/?continue=https://kauth.kakao.com/oauth/authorize?response_type=code&redirect_uri=http://localhost:8080%/login/oauth2/code/kakao%26through_account%3Dtrue%26client_id%3D43e398315e08268714887b3750a55107    }
+//      https://kauth.kakao.com/oauth/authorize?client_id=85599fcffe20ab676fa22f2c8f797546&redirect_uri=https://kmslolservice.cf/login/oauth2/code/kakao&response_type=code
     }
 
     @GetMapping("/login/oauth2/code/naver")
     @ResponseBody
     public String naverLogin(@RequestParam String code){
         return userService.naverLogin(code);
-//        https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=I7UExJKBf_S3n8z2QDw3&redirect_uri=http://localhost:8080/login/oauth2/code/naver&state=
+//        https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=weeO3S29sWCykO_vmNKh&redirect_uri=https://localhost/login/oauth2/code/naver&state=
     }
 
     @GetMapping("/admin/adminUser")

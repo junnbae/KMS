@@ -213,7 +213,7 @@ public class RiotApiService {
             });
         }
         recentGameRepository.saveAll(recentGameSet);
-        return recentGameRepository.findBySummonerPkOrderByTimeStampDesc(summonerPk);
+        return recentGameRepository.findTop10BySummonerPkOrderByTimeStampDesc(summonerPk);
     }
 
     public List<RecentGame> updateRecentGame(String summoner){
@@ -229,7 +229,7 @@ public class RiotApiService {
         String name = summonerAccount.getName();
         int pk = summonerAccount.getSummonerPk();
 
-        List<RecentGame> recentGameList = recentGameRepository.findBySummonerPkOrderByTimeStampDesc(pk);
+        List<RecentGame> recentGameList = recentGameRepository.findTop10BySummonerPkOrderByTimeStampDesc(pk);
         if (!recentGameList.isEmpty()){
             return recentGameList;
         }

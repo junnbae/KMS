@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RecentGameRepository extends JpaRepository<RecentGame, Long> {
-    List<RecentGame> findBySummonerPkOrderByTimeStampDesc(int pk);
+    List<RecentGame> findTop10BySummonerPkOrderByTimeStampDesc(int pk);
     Optional<RecentGame> findBySummonerPkAndMatchId(int pk, String matchId);
 }

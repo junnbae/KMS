@@ -173,5 +173,6 @@ public class ChampMap {
         ChampIdMap.put(26, "Zilean");
         ChampIdMap.put(142, "Zoe");
         ChampIdMap.put(143, "Zyra");
+        ChampIdMap.put(897, "KSante");
     }
 }
